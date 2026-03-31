@@ -6,7 +6,7 @@ These 3 mini-game concepts are designed to act as **opt-in sponsored playable ad
 
 ## Idea 1: Spam Slammer (Focus: "Don't Call Me")
 
-![Spam Slammer Concept Visual](/Users/mac/.gemini/antigravity/brain/ab4af15d-18f9-4aa2-a67c-9bd099926102/spam_slammer_concept_1774933383704.png)
+![Spam Slammer Concept Visual](spam_slammer_concept_1774933383704.png)
 
 ### High-Level Description
 A fast-paced, "Tinder-style" swiping game where the player must act as Partyhat's AI call screener. Incoming calls appear as character cards on the screen. The player has a fraction of a second to decide whether to accept the call (friends, family, delivery drivers) or slam the "Block" button on obvious scams and sneaky robocalls.
@@ -23,7 +23,7 @@ A fast-paced, "Tinder-style" swiping game where the player must act as Partyhat'
 
 ## Idea 2: Data Dash (Focus: "Super VPN")
 
-![Data Dash Concept Visual](/Users/mac/.gemini/antigravity/brain/ab4af15d-18f9-4aa2-a67c-9bd099926102/data_dash_concept_1774933402686.png)
+![Data Dash Concept Visual](data_dash_concept_1774933402686.png)
 
 ### High-Level Description
 An endless-runner style game where the player represents a packet of data trying to browse safely on a "Public Wi-Fi" network. The environment is filled with obstacles representing digital threats.
@@ -40,7 +40,7 @@ An endless-runner style game where the player represents a packet of data trying
 
 ## Idea 3: Leak Guard Scanner (Focus: "Leak Guard" & "AI Advisor")
 
-![Leak Guard Scanner Concept Visual](/Users/mac/.gemini/antigravity/brain/ab4af15d-18f9-4aa2-a67c-9bd099926102/leak_guard_concept_1774933415952.png)
+![Leak Guard Scanner Concept Visual](leak_guard_concept_1774933415952.png)
 
 ### High-Level Description
 A casual, satisfying puzzle game akin to Minesweeper combined with a matching game. You are tasked with analyzing the dark web to find and quarantine leaked data nodes before they spread to healthy accounts.

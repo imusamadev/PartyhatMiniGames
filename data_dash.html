@@ -862,14 +862,23 @@
             ctx.stroke();
         }
 
-        // Obsidian Floor (Track)
+        // Obsidian Floor (Track) - Deeper Metallic Base
         const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
-        floorGrad.addColorStop(0, '#020208'); floorGrad.addColorStop(1, '#05051c');
+        floorGrad.addColorStop(0, '#02020a'); 
+        floorGrad.addColorStop(0.5, '#050518'); 
+        floorGrad.addColorStop(1, '#020208');
         ctx.fillStyle = floorGrad;
-        const f1 = getV(-1.5, 1, zNear); const f2 = getV(1.5, 1, zNear);
-        const f3 = getV(1.5, 1, zFar);  const f4 = getV(-1.5, 1, zFar);
+        const f1 = getV(-2.5, 1, zNear); const f2 = getV(2.5, 1, zNear);
+        const f3 = getV(2.5, 1, zFar);  const f4 = getV(-2.5, 1, zFar);
         ctx.beginPath(); ctx.moveTo(f1.x, f1.y); ctx.lineTo(f2.x, f2.y);
         ctx.lineTo(f3.x, f3.y); ctx.lineTo(f4.x, f4.y); ctx.closePath(); ctx.fill();
+
+        // Subtle Floor Reflection / Center Bloom
+        const bloomGrad = ctx.createRadialGradient(canvas.width/2, canvas.height * 0.7, 0, canvas.width/2, canvas.height * 0.7, canvas.width * 0.5);
+        bloomGrad.addColorStop(0, `rgba(${color}, 0.15)`);
+        bloomGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = bloomGrad;
+        ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
 
         // 2. EMBEDDED HOLOGRAPHS
         holograms.forEach(h => {
@@ -900,22 +909,53 @@
             ctx.restore();
         });
 
-        // 4. LANE DIVIDERS & SPEED STREAKS
-        const drawLane = (offset) => {
+        // 4. MULTI-LANE NEON MARKERS (Dense glowing parallel lines)
+        const drawEnhancedLane = (offset, weight, alpha) => {
             const p1 = getV(offset, 1, zNear); const p2 = getV(offset, 1, zFar);
-            ctx.strokeStyle = `rgba(${color}, 0.25)`;
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = `rgba(${color}, ${alpha})`;
+            ctx.lineWidth = weight;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = weight * 5;
             ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            ctx.shadowBlur = 0;
         };
-        drawLane(-0.5); drawLane(0.5); drawLane(-1.5); drawLane(1.5);
+
+        // Main Lane Dividers (Sharp, distinct boundary markers)
+        drawEnhancedLane(-1.5, 2.5, 0.8); drawEnhancedLane(1.5, 2.5, 0.8);
+        drawEnhancedLane(-0.5, 2, 0.4); drawEnhancedLane(0.5, 2, 0.4);
+        
+        // OUTER TRACK GLOW (Broad single edges, no extra lane-like lines)
+        drawEnhancedLane(-1.6, 6, 0.3); // Broad left glow
+        drawEnhancedLane(1.6, 6, 0.3);  // Broad right glow
+
+        // Far Horizon Glow (Vignette focus point)
+        const hGrad = ctx.createRadialGradient(canvas.width/2, trackY, 0, canvas.width/2, trackY, 200);
+        hGrad.addColorStop(0, `rgba(${color}, 0.3)`);
+        hGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = hGrad;
+        ctx.beginPath();
+        ctx.ellipse(canvas.width/2, trackY, 200, 50, 0, 0, Math.PI*2);
+        ctx.fill();
 
         roadMarkers.forEach(m => {
-            const v1 = getV(m.lane, 0.99, m.z);
-            const v2 = getV(m.lane, 0.99, m.z + 150);
             const scale = 150 / m.z;
-            ctx.strokeStyle = `rgba(${color}, ${Math.min(0.6, scale * 3)})`;
-            ctx.lineWidth = 1 * scale;
-            ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke();
+            const markerAlpha = Math.min(0.8, scale * 3);
+            
+            // Draw as discrete horizontal "Data Pulses"
+            const w = (canvas.width * 0.25) * scale;
+            const h = (canvas.height * 0.1) * scale;
+            const v = getV(m.lane, 0.99, m.z);
+            
+            ctx.fillStyle = `rgba(${color}, ${markerAlpha})`;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = 15 * scale;
+            
+            // Short horizontal bar
+            const barW = 60 * scale;
+            const barH = 4 * scale;
+            ctx.fillRect(v.x - barW/2, v.y - barH/2, barW, barH);
+            
+            ctx.shadowBlur = 0;
         });
 
     }

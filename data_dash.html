@@ -96,6 +96,7 @@
             letter-spacing: -2px;
             margin-bottom: 8px;
             background: linear-gradient(to right, var(--primary-neon), var(--secondary-neon));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
@@ -317,7 +318,6 @@
     // Game Constants
     const LANES = [-1, 0, 1];
     const HORIZON_Y = 0.35;
-    const COLLISION_RADIUS = 35;
     const WIN_TIME = 45000;
     const PLAYER_Y_POS = 0.85;
     const PLAYER_Z_SCALE = (PLAYER_Y_POS - HORIZON_Y) / (1 - HORIZON_Y);
@@ -325,15 +325,17 @@
     // Game State
     let gameState = 'START';
     let score = 0;
-    let speed = 6;
-    let baseSpeed = 6;
-    let maxSpeed = 16;
+    let speed = 4;
+    let baseSpeed = 4;
+    let maxSpeed = 12;
     let laneIndex = 1;
     let currentLanePos = 0;
     let targetLanePos = 0;
     let obstacles = [];
     let powerups = [];
     let particles = [];
+    let roadMarkers = []; // For speed streaks and rhythm bars
+    let holograms = [];   // For wall-stuck displays
     let lastTime = 0;
     let encryptionTime = 0;
     let survivedTime = 0;
@@ -392,7 +394,7 @@
             this.z = 1200;
             this.lane = LANES[Math.floor(Math.random() * LANES.length)];
             this.type = type;
-            this.size = 50;
+            this.size = type === 'shield' ? 35 : 75;
             this.rotation = Math.random() * Math.PI * 2;
             
             // Differentiate visuals
@@ -420,28 +422,157 @@
 
             ctx.save();
             ctx.translate(screenX, screenY);
-            ctx.rotate(this.rotation);
-            // ctx.shadowBlur = 15 * scale; // DEPRECATED: Performance Bottleneck
-            // ctx.shadowColor = this.color;
+            
             ctx.strokeStyle = this.color;
-            ctx.lineWidth = 2;
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 10 * Math.min(scale, 2);
             
             if (this.type === 'shield') {
+                // --- 2D HOLOGRAPHIC PANEL (VPN) ---
+                const wallW = w * 1.5;
+                const wallH = w;
+                
+                // Base anchor glow (stuck on road)
                 ctx.beginPath();
-                ctx.moveTo(0, -w/2); ctx.lineTo(w/2, -w/4); ctx.lineTo(w/2, w/4);
-                ctx.lineTo(0, w/2); ctx.lineTo(-w/2, w/4); ctx.lineTo(-w/2, -w/4);
-                ctx.closePath(); ctx.stroke();
-                // Partyhat icon
-                ctx.fillStyle = this.color; ctx.beginPath();
-                ctx.moveTo(0, -w/6); ctx.lineTo(w/6, w/6); ctx.lineTo(-w/6, w/6); ctx.closePath(); ctx.fill();
-            } else if (this.type === 'MALWARE') {
-                ctx.strokeRect(-w/2, -w/2, w, w);
-                ctx.beginPath(); ctx.moveTo(-w/2, -w/2); ctx.lineTo(w/2, w/2); ctx.stroke();
-            } else if (this.type === 'TRACKER') {
-                ctx.beginPath(); ctx.moveTo(0, -w/2); ctx.lineTo(w/2, w/2); ctx.lineTo(-w/2, w/2); ctx.closePath(); ctx.stroke();
-            } else if (this.type === 'SNOOP') {
-                ctx.beginPath(); ctx.arc(0, 0, w/2, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(0, 0, w/4, 0, Math.PI*2); ctx.fillStyle = this.color; ctx.fill();
+                ctx.ellipse(0, 0, wallW/2 + 8, 8 * scale, 0, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.4)';
+                ctx.fill();
+
+                // Holographic translucent fill
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.1)';
+                ctx.fillRect(-wallW/2, -wallH, wallW, wallH);
+                
+                // Outer cyan border
+                ctx.lineWidth = 3 * scale;
+                ctx.strokeRect(-wallW/2, -wallH, wallW, wallH);
+                
+                // Pulsing Scanline
+                const pulseY = ((Date.now() * 0.005) % wallH);
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.8)';
+                ctx.fillRect(-wallW/2, -pulseY, wallW, 4 * scale);
+
+            } else {
+                // Obstacles rotate in 3D-ish space
+                ctx.rotate(this.rotation);
+                ctx.lineWidth = 3 * scale;
+                
+                if (this.type === 'MALWARE') {
+                    // --- ENHANCED 3D EXTRUDED RING (Red) ---
+                    ctx.restore(); ctx.save();
+                    ctx.translate(screenX, screenY);
+                    const reflectionW = w * 1.5;
+                    ctx.fillStyle = ctx.createRadialGradient(0, 0, 0, 0, 0, reflectionW/2);
+                    ctx.fillStyle.addColorStop(0, 'rgba(255, 0, 85, 0.4)');
+                    ctx.fillStyle.addColorStop(1, 'rgba(255, 0, 85, 0)');
+                    ctx.beginPath(); ctx.ellipse(0, 0, reflectionW/2, 15 * scale, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.restore(); ctx.save();
+                    ctx.translate(screenX, screenY);
+                    ctx.rotate(this.rotation);
+
+                    const depth = 20 * scale;
+                    const sides = 6;
+                    const outerR = w / 2;
+                    const innerR = w / 3.5;
+                    
+                    // Sides Shading
+                    for(let i=0; i<sides; i++) {
+                        const a1 = i * Math.PI * 2 / sides;
+                        const a2 = (i+1) * Math.PI * 2 / sides;
+                        
+                        ctx.fillStyle = (i % 2 === 0) ? 'rgba(255, 0, 85, 0.3)' : 'rgba(100, 0, 20, 0.6)';
+                        ctx.beginPath();
+                        ctx.moveTo(outerR * Math.cos(a1), outerR * Math.sin(a1));
+                        ctx.lineTo(outerR * Math.cos(a2), outerR * Math.sin(a2));
+                        ctx.lineTo(outerR * Math.cos(a2) + depth, outerR * Math.sin(a2));
+                        ctx.lineTo(outerR * Math.cos(a1) + depth, outerR * Math.sin(a1));
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    // Front Face
+                    ctx.shadowBlur = 20 * scale;
+                    ctx.shadowColor = '#ff0055';
+                    ctx.strokeStyle = '#ff0055';
+                    ctx.beginPath();
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(outerR * Math.cos(a), outerR * Math.sin(a));
+                    }
+                    ctx.stroke();
+
+                    // Hot Orange Core Detail
+                    ctx.strokeStyle = '#ffaa33';
+                    ctx.lineWidth = 1 * scale;
+                    ctx.beginPath();
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(outerR * 0.9 * Math.cos(a), outerR * 0.9 * Math.sin(a));
+                    }
+                    ctx.stroke();
+
+                } else if (this.type === 'TRACKER') {
+                    // --- 3D TETRAHEDRON (Yellow Pyramid) ---
+                    const depth = w / 2;
+                    const points = [
+                        {x: 0, y: -w/2, z: 0},
+                        {x: w/2, y: w/2, z: -depth/2},
+                        {x: -w/2, y: w/2, z: -depth/2},
+                        {x: 0, y: w/4, z: depth}
+                    ];
+                    
+                    // Simple 3D rotation and projection
+                    const angle = this.rotation;
+                    const projected = points.map(p => {
+                        const x = p.x * Math.cos(angle) - p.z * Math.sin(angle);
+                        const z = p.x * Math.sin(angle) + p.z * Math.cos(angle);
+                        return { x: x, y: p.y };
+                    });
+
+                    const drawFace = (i1, i2, i3, fill) => {
+                        ctx.fillStyle = fill;
+                        ctx.beginPath();
+                        ctx.moveTo(projected[i1].x, projected[i1].y);
+                        ctx.lineTo(projected[i2].x, projected[i2].y);
+                        ctx.lineTo(projected[i3].x, projected[i3].y);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    };
+
+                    drawFace(0, 1, 2, 'rgba(255, 204, 0, 0.1)');
+                    drawFace(0, 1, 3, 'rgba(255, 204, 0, 0.4)');
+                    drawFace(0, 2, 3, 'rgba(255, 204, 0, 0.2)');
+                    
+                    // Central "Eye" core
+                    ctx.beginPath();
+                    ctx.arc(0, 0, w/10, 0, Math.PI*2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+
+                } else if (this.type === 'SNOOP') {
+                    // --- VOLUMETRIC SPHERE ORB (Purple) ---
+                    const grad = ctx.createRadialGradient(-w/6, -w/6, 2 * scale, 0, 0, w/2);
+                    grad.addColorStop(0, '#fff'); // Specular highlight
+                    grad.addColorStop(0.2, '#cc00ff'); // Main color
+                    grad.addColorStop(1, '#330066'); // Dark core
+                    
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, w/2, 0, Math.PI*2);
+                    ctx.fill();
+                    
+                    // Rim light / Glow ring
+                    ctx.strokeStyle = 'rgba(204, 0, 255, 0.8)';
+                    ctx.lineWidth = 2 * scale;
+                    ctx.stroke();
+
+                    // Digital Pupil
+                    ctx.beginPath();
+                    ctx.arc(0, 0, w/5, 0, Math.PI*2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fill();
+                }
             }
             ctx.restore();
         }
@@ -450,30 +581,44 @@
             const scale = 150 / this.z;
             const screenX = canvas.width / 2 + (this.lane * (canvas.width * 0.25) * scale);
             const screenY = canvas.height * HORIZON_Y + (canvas.height * (1 - HORIZON_Y) * scale);
-            return { x: screenX, y: screenY, r: COLLISION_RADIUS * scale * 3 };
+            // Dynamic collision radius based on visual size
+            return { x: screenX, y: screenY, r: (this.size * 0.7) * scale * 3 };
         }
     }
 
     class Particle {
-        constructor(x, y, color, char = null) {
+        constructor(x, y, color, type = 'pixel') {
             this.x = x; this.y = y;
             this.vx = (Math.random() - 0.5) * 10;
             this.vy = (Math.random() - 0.5) * 10;
             this.life = 1.0;
             this.color = color;
-            this.char = char;
+            this.type = type; // 'pixel', 'hex', or a character
+            this.rotation = Math.random() * Math.PI;
         }
         update() {
             this.x += this.vx; this.y += this.vy;
+            this.rotation += 0.1;
             this.life -= 0.02;
             return this.life > 0;
         }
         draw() {
             ctx.globalAlpha = this.life;
             ctx.fillStyle = this.color;
-            if (this.char) {
+            if (this.type === 'hex') {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.beginPath();
+                for(let i=0; i<6; i++) {
+                    const a = i * Math.PI * 2 / 6;
+                    ctx.lineTo(6 * Math.cos(a), 6 * Math.sin(a));
+                }
+                ctx.closePath(); ctx.fill();
+                ctx.restore();
+            } else if (this.type.length === 1) { // character
                 ctx.font = '12px monospace';
-                ctx.fillText(this.char, this.x, this.y);
+                ctx.fillText(this.type, this.x, this.y);
             } else {
                 ctx.fillRect(this.x, this.y, 4, 4);
             }
@@ -484,13 +629,15 @@
     function startGame() {
         gameState = 'PLAYING';
         score = 0; survivedTime = 0; jitter = 0;
-        speed = baseSpeed = 6;
+        speed = baseSpeed = 4;
         encryptionTime = 0;
         laneIndex = 1; targetLanePos = currentLanePos = 0;
         obstacles = []; powerups = []; particles = [];
+        roadMarkers = []; // Reset road visuals
         lastTime = performance.now();
         
         startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.remove('hidden'); // In case it was showing
         gameOverOverlay.classList.add('hidden');
         winOverlay.classList.add('hidden');
         container.style.filter = 'none';
@@ -499,6 +646,18 @@
         encryptionStatus.innerText = 'INACTIVE';
         encryptionStatus.style.color = 'rgba(255,255,255,0.2)';
         survivalFill.style.width = '0%';
+
+        // Initialize some road markers for immediate movement
+        for(let i=0; i<10; i++) {
+            roadMarkers.push({z: i * 150, type: Math.random() > 0.7 ? 'bar' : 'streak', lane: Math.floor(Math.random()*3)-1});
+        }
+        
+        holograms = [];
+
+        holograms = [];
+        for(let i=0; i<3; i++) {
+            holograms.push({ z: 1000 + i * 400, side: i % 2 === 0 ? 1 : -1, type: i === 0 ? 'SCORE' : 'HIGH SCORE' });
+        }
 
         requestAnimationFrame(gameLoop);
         playSound(200, 0.4, 'square', 0.05);
@@ -608,6 +767,34 @@
             return alive;
         });
 
+        // Update road markers (speed streaks)
+        if (Math.random() < 0.15) {
+            roadMarkers.push({
+                z: 1500, 
+                type: Math.random() > 0.8 ? 'bar' : 'streak', 
+                lane: Math.floor(Math.random()*3)-1
+            });
+        }
+        roadMarkers = roadMarkers.filter(m => {
+            m.z -= actualSpeed * dt * 0.15;
+            return m.z > 20;
+        });
+
+        // Update holograms
+
+        // Update holograms
+        if (Math.random() < 0.02) {
+            holograms.push({ 
+                z: 1500, 
+                side: Math.random() > 0.5 ? 1 : -1, 
+                type: Math.random() > 0.8 ? 'HIGH SCORE' : 'DATA FLOW' 
+            });
+        }
+        holograms = holograms.filter(h => {
+            h.z -= actualSpeed * dt * 0.15;
+            return h.z > 20;
+        });
+
         particles = particles.filter(p => p.update());
     }
 
@@ -630,59 +817,309 @@
 
     function drawTunnel() {
         const color = encryptionTime > 0 ? '0, 242, 255' : '255, 0, 234';
-        const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 0.2;
-        ctx.lineWidth = 1.5; 
-        // ctx.shadowBlur = 15; // DEPRECATED: Performance Bottleneck
-        // ctx.shadowColor = `rgb(${color})`;
-        for (let i = -1.5; i <= 1.5; i += 1) {
-            const x1 = canvas.width / 2 + (i * (canvas.width * 0.25) * 0.01);
-            const y1 = canvas.height * HORIZON_Y;
-            const x2 = canvas.width / 2 + (i * (canvas.width * 0.25) * 10);
-            const y2 = canvas.height;
-            ctx.strokeStyle = `rgba(${color}, ${pulse})`;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        const trackY = canvas.height * HORIZON_Y;
+        const trackH = canvas.height * (1 - HORIZON_Y);
+        
+        // Perspective tool
+        const getV = (laneX, heightY, z) => {
+            const scale = 150 / z;
+            return {
+                x: canvas.width / 2 + (laneX * (canvas.width * 0.25) * scale),
+                y: trackY + (heightY * trackH * scale)
+            };
+        };
+
+        const zNear = 20;
+        const zFar = 1500;
+
+        // 1. PHYSICAL WALL PLATING (Matte Metallic Panels) - Increased Smoothness
+        const segments = 24; 
+        for(let i=0; i<segments; i++) {
+            const angle1 = Math.PI + (i * Math.PI / segments);
+            const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
+            
+            const l1 = Math.cos(angle1) * 2; const h1 = Math.sin(angle1) * 2 + 1;
+            const l2 = Math.cos(angle2) * 2; const h2 = Math.sin(angle2) * 2 + 1;
+            
+            const v1 = getV(l1, h1, zNear); const v2 = getV(l2, h2, zNear);
+            const v3 = getV(l2, h2, zFar);  const v4 = getV(l1, h1, zFar);
+            
+            // Matte metallic plating look
+            const wallGrad = ctx.createLinearGradient(v1.x, v1.y, v2.x, v2.y);
+            wallGrad.addColorStop(0, '#050510');
+            wallGrad.addColorStop(0.5, '#0a0a1a');
+            wallGrad.addColorStop(1, '#050510');
+            
+            ctx.fillStyle = wallGrad;
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
+            ctx.lineTo(v3.x, v3.y); ctx.lineTo(v4.x, v4.y);
+            ctx.closePath(); ctx.fill();
+
+            // Subtle grid panel lines
+            ctx.strokeStyle = `rgba(${color}, 0.08)`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
         }
-        const time = (Date.now() * 0.001 * speed) % 1;
-        for (let j = 0; j < 10; j++) {
-            const z = (j - time) / 10; if (z < 0) continue;
-            const y = canvas.height * HORIZON_Y + (canvas.height * (1 - HORIZON_Y) * z);
-            const w = canvas.width * z * 8;
-            ctx.strokeStyle = `rgba(${color}, ${z * 0.4})`;
-            ctx.beginPath(); ctx.moveTo(canvas.width/2 - w/2, y); ctx.lineTo(canvas.width/2 + w/2, y); ctx.stroke();
-        }
-        ctx.shadowBlur = 0;
+
+        // Obsidian Floor (Track)
+        const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
+        floorGrad.addColorStop(0, '#020208'); floorGrad.addColorStop(1, '#05051c');
+        ctx.fillStyle = floorGrad;
+        const f1 = getV(-1.5, 1, zNear); const f2 = getV(1.5, 1, zNear);
+        const f3 = getV(1.5, 1, zFar);  const f4 = getV(-1.5, 1, zFar);
+        ctx.beginPath(); ctx.moveTo(f1.x, f1.y); ctx.lineTo(f2.x, f2.y);
+        ctx.lineTo(f3.x, f3.y); ctx.lineTo(f4.x, f4.y); ctx.closePath(); ctx.fill();
+
+        // 2. EMBEDDED HOLOGRAPHS
+        holograms.forEach(h => {
+            const scale = 150 / h.z;
+            if (scale > 2 || scale < 0.1) return;
+            // Position on side walls
+            const hx = canvas.width/2 + (h.side * canvas.width * 0.25) * scale * 2;
+            const hy = trackY - (canvas.height * 0.1) * scale;
+            
+            ctx.save();
+            ctx.translate(hx, hy);
+            ctx.globalAlpha = Math.min(1, scale * 2) * 0.6;
+            
+            // Hologram frame
+            ctx.strokeStyle = `rgba(${color}, 1)`;
+            ctx.lineWidth = 2 * scale;
+            ctx.strokeRect(-50*scale, -20*scale, 100*scale, 40*scale);
+            
+            ctx.fillStyle = `rgba(${color}, 0.1)`;
+            ctx.fillRect(-50*scale, -20*scale, 100*scale, 40*scale);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = `${Math.floor(10 * scale)}px 'Inter', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(h.type, 0, 0);
+            ctx.fillText(Math.floor(score/10) + (h.side > 0 ? "" : "0"), 0, 15*scale);
+            
+            ctx.restore();
+        });
+
+        // 4. LANE DIVIDERS & SPEED STREAKS
+        const drawLane = (offset) => {
+            const p1 = getV(offset, 1, zNear); const p2 = getV(offset, 1, zFar);
+            ctx.strokeStyle = `rgba(${color}, 0.25)`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        };
+        drawLane(-0.5); drawLane(0.5); drawLane(-1.5); drawLane(1.5);
+
+        roadMarkers.forEach(m => {
+            const v1 = getV(m.lane, 0.99, m.z);
+            const v2 = getV(m.lane, 0.99, m.z + 150);
+            const scale = 150 / m.z;
+            ctx.strokeStyle = `rgba(${color}, ${Math.min(0.6, scale * 3)})`;
+            ctx.lineWidth = 1 * scale;
+            ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke();
+        });
+
     }
+
 
     function drawPlayer() {
         const x = canvas.width/2 + currentLanePos * PLAYER_Z_SCALE;
         const y = canvas.height * PLAYER_Y_POS;
-        ctx.save(); ctx.translate(x, y); ctx.rotate((targetLanePos - currentLanePos) * 0.02);
+        const t = Date.now();
+        const tilt = (targetLanePos - currentLanePos) * 0.025;
+        const hover = Math.sin(t * 0.003) * 6; // gentle hover bob
 
+        ctx.save();
+        ctx.translate(x, y + hover - 40); // Lift up slightly
+        ctx.rotate(tilt);
+
+        // Scale up to better match the prominent size in concept
+        ctx.scale(1.2, 1.2);
+
+        // --- HOVERBOARD ---
+        // Board shadow
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(0, 60, 45, 12, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Main board body (sleek tech plate)
+        ctx.fillStyle = '#0a0a1a';
+        ctx.beginPath();
+        ctx.moveTo(-35, 55);
+        ctx.lineTo(35, 55);
+        ctx.quadraticCurveTo(45, 55, 45, 60);
+        ctx.quadraticCurveTo(45, 65, 35, 65);
+        ctx.lineTo(-35, 65);
+        ctx.quadraticCurveTo(-45, 65, -45, 60);
+        ctx.quadraticCurveTo(-45, 55, -35, 55);
+        ctx.fill();
+
+        // Outer cyan edge glow
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Thruster exhaust underneath board
+        const trailLen = Math.sin(t*0.02)*10 + 25;
+        const lltGrad = ctx.createLinearGradient(-20, 65, -20, 65 + trailLen);
+        lltGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
+        lltGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
+        ctx.fillStyle = lltGrad;
+        ctx.beginPath(); ctx.ellipse(-20, 65, 6, trailLen, 0, 0, Math.PI*2); ctx.fill();
+
+        const rrtGrad = ctx.createLinearGradient(20, 65, 20, 65 + trailLen);
+        rrtGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
+        rrtGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
+        ctx.fillStyle = rrtGrad;
+        ctx.beginPath(); ctx.ellipse(20, 65, 6, trailLen, 0, 0, Math.PI*2); ctx.fill();
+
+        // Front glowing bumper segment
+        ctx.fillStyle = '#00f2ff';
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.roundRect(-15, 60, 30, 4, 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // --- ORANGE ZIGZAG LEGS (Connecting Board to Sphere) ---
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#ff5500';
+        ctx.shadowBlur = 12;
+        
+        // Left leg
+        ctx.beginPath();
+        ctx.moveTo(-18, 55); 
+        ctx.lineTo(-25, 40); 
+        ctx.lineTo(-12, 25); 
+        ctx.stroke();
+
+        // Right leg
+        ctx.beginPath();
+        ctx.moveTo(18, 55); 
+        ctx.lineTo(25, 40); 
+        ctx.lineTo(12, 25); 
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // --- THE SHIELD BUBBLE (Geodesic / Holographic Sphere) ---
         if (encryptionTime > 0) {
-            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0, 242, 255, 0.6)';
+            const shieldGlow = 0.9;
+            const shieldPulse = Math.sin(t * 0.01) * 5;
+            
             ctx.beginPath();
-            const angle = Date.now() * 0.005;
-            for(let i=0; i<6; i++) {
-                const a = angle + (Math.PI/3) * i;
-                ctx.lineTo(Math.cos(a)*60, Math.sin(a)*60);
-            }
-            ctx.closePath(); ctx.stroke();
-            // ctx.shadowBlur = 25; ctx.shadowColor = 'var(--primary-neon)';
+            // Shift shield center slightly up to encompass player
+            ctx.arc(0, -5, 75 + shieldPulse, 0, Math.PI*2);
+            
+            let shieldGrad = ctx.createRadialGradient(0, -5, 40, 0, -5, 75 + shieldPulse);
+            shieldGrad.addColorStop(0, `rgba(0, 242, 255, ${0.05 * shieldGlow})`);
+            shieldGrad.addColorStop(0.8, `rgba(0, 242, 255, ${0.4 * shieldGlow})`);
+            shieldGrad.addColorStop(1, `rgba(0, 242, 255, ${0.9 * shieldGlow})`);
+            
+            ctx.fillStyle = shieldGrad;
+            ctx.fill();
+
+            ctx.strokeStyle = `rgba(0, 242, 255, ${shieldGlow + 0.2})`;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Faint hexagonal/geodesic lines on the shield
+            ctx.strokeStyle = `rgba(0, 242, 255, ${0.3 * shieldGlow})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(0, -5, 75 + shieldPulse, 30, 0, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(0, -5, 30, 75 + shieldPulse, 0, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.beginPath();
+            // Diagonal 1
+            ctx.ellipse(0, -5, 75 + shieldPulse, 75 + shieldPulse, Math.PI/4, 0, Math.PI*2);
+            ctx.stroke();
         }
 
-        ctx.fillStyle = 'white';
-        ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(25, 15); ctx.lineTo(0, 8); ctx.lineTo(-25, 15); ctx.closePath(); ctx.fill();
+        // --- SPHERE BODY (Dark Core) ---
+        ctx.beginPath();
+        ctx.arc(0, 0, 40, 0, Math.PI*2);
+        ctx.fillStyle = '#050a1a'; // Deep dark metallic blue
+        ctx.fill();
+        
+        // Spherical shading
+        let shadingGen = ctx.createRadialGradient(-10, -10, 5, 0, 0, 40);
+        shadingGen.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+        shadingGen.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        ctx.fillStyle = shadingGen;
+        ctx.fill();
 
-        const glow = Math.sin(Date.now() * 0.02) * 8 + 10;
-        ctx.fillStyle = encryptionTime > 0 ? 'var(--primary-neon)' : 'var(--secondary-neon)';
-        ctx.fillRect(-15, 15, 8, glow); ctx.fillRect(7, 15, 8, glow);
+        // Rim light
+        ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // --- WRAP-AROUND GLOWING STRIPES ---
+        function drawStripe(y, rX, rY, color, width, startAngle, endAngle) {
+            ctx.beginPath();
+            ctx.ellipse(0, y, rX, rY, 0, startAngle, endAngle);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        // Top cyan stripe
+        drawStripe(-25, 25, 6, '#00f2ff', 2, 0, Math.PI*2);
+        // High cyan stripe
+        drawStripe(-12, 35, 10, '#00bfff', 1.5, Math.PI, Math.PI*2);
+        drawStripe(-12, 35, 10, '#00f2ff', 3, 0, Math.PI); // facing us is brighter
+        
+        // Mid thick Orange sequence
+        drawStripe(5, 38, 12, '#ffaa00', 4, 0.1, Math.PI - 0.1); 
+        drawStripe(15, 35, 10, '#ff4400', 2.5, 0.1, Math.PI - 0.1); 
+        
+        // Bottom cyan stripe
+        drawStripe(25, 25, 6, '#00f2ff', 2, 0.2, Math.PI - 0.2);
+
+        // --- CENTRAL GLOWING EYE ---
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 25;
+        
+        // The eye center
+        const eyeX = -6;
+        const eyeY = -4;
+        
+        // Eye base aura
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 12, 0, Math.PI*2);
+        ctx.fillStyle = '#e6ffff';
+        ctx.fill();
+
+        // Eye bright core
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 6, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // Cyan ring
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 14, 0, Math.PI*2);
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.shadowBlur = 0;
+
         ctx.restore();
     }
 
     function createExplosion(x, y, color, binary = false) {
         for (let i = 0; i < 20; i++) {
-            const char = binary ? (Math.random() > 0.5 ? '0' : '1') : null;
-            particles.push(new Particle(x, y, color, char));
+            const type = binary ? (Math.random() > 0.5 ? '1' : '0') : 'hex';
+            particles.push(new Particle(x, y, color, type));
         }
     }
 

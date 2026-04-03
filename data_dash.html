@@ -134,66 +134,147 @@
 
         #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             z-index: 5;
             pointer-events: none;
+            font-family: 'Inter', sans-serif;
         }
 
-        .score-box {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--primary-neon);
-            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        /* --- TOP LEFT: RANK, SCORE, COINS --- */
+        .hud-left {
             display: flex;
             flex-direction: column;
+            gap: 4px;
         }
 
-        .score-label {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.5);
+        .rank-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            font-weight: 900;
         }
 
-        #encryption-timer {
-            width: 150px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 8px;
+        .stat-label {
+            font-size: 0.65rem;
+            color: rgba(0, 242, 255, 0.7);
+            letter-spacing: 1px;
+            margin-right: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .coin-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .coin-icon {
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #ff8800);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 900;
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            border: 1px solid #fff;
+        }
+
+        .coin-value {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+        }
+
+        /* --- TOP RIGHT: HEARTS, PROGRESS --- */
+        .hud-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .hearts-container {
+            display: flex;
+            gap: 4px;
+        }
+
+        .heart {
+            width: 20px;
+            height: 20px;
+            color: #ff0055;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 85, 0.5));
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        .heart.empty {
+            color: rgba(255, 255, 255, 0.1);
+            filter: none;
+        }
+
+        .heart.pop {
+            transform: scale(1.5);
             opacity: 0;
-            transition: opacity 0.3s;
         }
 
-        #encryption-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--primary-neon);
-            box-shadow: 0 0 10px var(--primary-neon);
-        }
-
-        #survival-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
+        #survival-bar-container {
+            width: 160px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
 
         #survival-fill {
             width: 0%;
             height: 100%;
-            background: var(--primary-neon);
-            box-shadow: 0 0 10px var(--primary-neon);
+            background: linear-gradient(to right, #00fff2, #00ff88);
+            box-shadow: 0 0 15px rgba(0, 255, 242, 0.6);
             transition: width 0.1s linear;
         }
+
+        #encryption-status-small {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+
+        .shield-icon {
+            width: 14px;
+            height: 14px;
+            margin-left: 6px;
+            color: #00f2ff;
+            opacity: 0.2;
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .shield-active {
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 5px #00f2ff);
+        }
+
+        /* --- Hide old HUD elements --- */
+        #encryption-timer, #survival-progress { display: none; }
 
         .cta-text {
             margin-top: 20px;
@@ -234,16 +315,31 @@
 
 <div id="game-container">
     <div id="hud">
-        <div class="score-box">
-            <span class="score-label">Secure Data Log</span>
-            <span id="score">00000</span>
-            <div id="encryption-timer"><div id="encryption-fill"></div></div>
+        <div class="hud-left">
+            <div class="rank-score-row">
+                <div><span class="stat-label">RANK</span><span id="rank-value" class="stat-value">1</span></div>
+                <div><span class="stat-label">SCORE</span><span id="score" class="stat-value">0</span></div>
+            </div>
+            <div class="coin-row">
+                <div class="coin-icon">C</div>
+                <span id="coins" class="coin-value">0</span>
+                <svg class="shield-icon" id="hud-shield" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.67-3.13 8.75-7 9.89-3.87-1.14-7-5.22-7-9.89v-4.7l7-3.12z"/>
+                </svg>
+            </div>
         </div>
-        <div class="score-box" style="text-align: right;">
-            <span class="score-label">Encryption Level</span>
-            <span id="encryption-status" style="color: rgba(255,255,255,0.2)">INACTIVE</span>
+
+        <div class="hud-right">
+            <div id="hearts" class="hearts-container">
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+            <div id="survival-bar-container">
+                <div id="survival-fill"></div>
+            </div>
+            <div id="encryption-status-small">ENCRYPTION: <span id="enc-pct">0%</span></div>
         </div>
-        <div id="survival-progress"><div id="survival-fill"></div></div>
     </div>
 
     <!-- Start Overlay -->
@@ -303,11 +399,9 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score');
+    const coinsEl = document.getElementById('coins');
     const finalScoreEl = document.getElementById('final-score');
     const winScoreEl = document.getElementById('win-score');
-    const encryptionFill = document.getElementById('encryption-fill');
-    const encryptionTimer = document.getElementById('encryption-timer');
-    const encryptionStatus = document.getElementById('encryption-status');
     const survivalFill = document.getElementById('survival-fill');
     const startOverlay = document.getElementById('start-overlay');
     const gameOverOverlay = document.getElementById('game-over-overlay');
@@ -325,6 +419,8 @@
     // Game State
     let gameState = 'START';
     let score = 0;
+    let coins = 0;
+    let lives = 3;
     let speed = 4;
     let baseSpeed = 4;
     let maxSpeed = 12;
@@ -638,24 +734,24 @@
 
     function startGame() {
         gameState = 'PLAYING';
-        score = 0; survivedTime = 0; jitter = 0;
+        score = 0; coins = 0; lives = 3; survivedTime = 0; jitter = 0;
+        lastRankVal = 1;
         speed = baseSpeed = 4;
         encryptionTime = 0;
         laneIndex = 1; targetLanePos = currentLanePos = 0;
         obstacles = []; powerups = []; particles = [];
-        roadMarkers = []; // Reset road visuals
+        roadMarkers = [];
         lastTime = performance.now();
         
         startOverlay.classList.add('hidden');
-        gameOverOverlay.classList.remove('hidden'); // In case it was showing
         gameOverOverlay.classList.add('hidden');
         winOverlay.classList.add('hidden');
         container.style.filter = 'none';
         
-        encryptionTimer.style.opacity = '0';
-        encryptionStatus.innerText = 'INACTIVE';
-        encryptionStatus.style.color = 'rgba(255,255,255,0.2)';
-        survivalFill.style.width = '0%';
+        updateHUD();
+        const hList = document.querySelectorAll('.heart');
+        hList.forEach(h => h.classList.remove('pop', 'used', 'empty'));
+        if (survivalFill) survivalFill.style.width = '0%';
 
         // Initialize some road markers for immediate movement
         for(let i=0; i<10; i++) {
@@ -701,9 +797,7 @@
     function update(dt) {
         survivedTime += dt;
         score += speed * dt * 0.01;
-        scoreEl.innerText = Math.floor(score).toString().padStart(5, '0');
-        
-        survivalFill.style.width = Math.min(100, (survivedTime / WIN_TIME) * 100) + '%';
+        updateHUD();
         if (survivedTime >= WIN_TIME) { endGame(true); return; }
 
         speed = Math.min(maxSpeed, baseSpeed + (score / 1500));
@@ -721,12 +815,12 @@
 
         if (encryptionTime > 0) {
             encryptionTime -= dt;
-            const pct = (encryptionTime / ENCRYPTION_DURATION) * 100;
-            encryptionFill.style.width = pct + '%';
+            const pct = Math.floor((encryptionTime / ENCRYPTION_DURATION) * 100);
+            document.getElementById('enc-pct').innerText = pct + '%';
+            document.getElementById('hud-shield').classList.add('shield-active');
             if (encryptionTime <= 0) {
-                encryptionTimer.style.opacity = '0';
-                encryptionStatus.innerText = 'INACTIVE';
-                encryptionStatus.style.color = 'rgba(255,255,255,0.2)';
+                document.getElementById('enc-pct').innerText = '0%';
+                document.getElementById('hud-shield').classList.remove('shield-active');
             }
         }
 
@@ -738,12 +832,22 @@
             const r = obj.getRect();
             if (Math.hypot(r.x - px, r.y - py) < 50 && obj.z < 250) {
                 if (encryptionTime > 0) {
-                    score += 200; createExplosion(r.x, r.y, obj.color, true);
+                    score += 200; coins += 5; // Smashing malware gives coins
+                    createExplosion(r.x, r.y, obj.color, true);
                     playSound(500, 0.1, 'sine', 0.05); showToast('SMASH +200');
+                    updateHUD();
                     return false;
                 } else {
                     switch(obj.type) {
-                        case 'MALWARE': endGame(false); break;
+                        case 'MALWARE': 
+                            lives--; 
+                            if (lives <= 0) endGame(false); 
+                            else {
+                                playSound(100, 0.2, 'sawtooth', 0.1);
+                                showToast('CONNECTION LOST!');
+                                jitter = 500;
+                            }
+                            break;
                         case 'TRACKER': 
                             baseSpeed = Math.max(3, baseSpeed - 2); 
                             score = Math.max(0, score - 100); 
@@ -756,6 +860,7 @@
                             showToast('SNOOPED! GLITCH'); break;
                     }
                     createExplosion(r.x, r.y, obj.color, true);
+                    updateHUD();
                     return false;
                 }
             }
@@ -767,11 +872,10 @@
             const r = obj.getRect();
             if (Math.hypot(r.x - px, r.y - py) < 60 && obj.z < 250) {
                 encryptionTime = ENCRYPTION_DURATION;
-                encryptionTimer.style.opacity = '1';
-                encryptionStatus.innerText = 'ENCRYPTED';
-                encryptionStatus.style.color = 'var(--primary-neon)';
+                coins += 10;
                 createExplosion(px, py, '#00f2ff', true);
                 playSound(600, 0.3, 'sine', 0.08);
+                updateHUD();
                 return false;
             }
             return alive;
@@ -802,6 +906,50 @@
         tunnelRings.sort((a, b) => b - a); // Draw further rings first
 
         particles = particles.filter(p => p.update());
+    }
+
+    let lastRankVal = 1;
+    function updateHUD() {
+        if (gameState === 'START') return;
+        
+        // Upward Rank Progression (1 -> 5+)
+        let currentRank = 1;
+        if (score >= 2000)      currentRank = 5;
+        else if (score >= 1000)  currentRank = 4;
+        else if (score >= 500)   currentRank = 3;
+        else if (score >= 200)   currentRank = 2;
+        
+        // Rank Up Notification (Announce when rank increases)
+        if (currentRank > lastRankVal) {
+            showToast('RANK UP: ' + currentRank);
+            playSound(800, 0.2, 'sine', 0.1); 
+            lastRankVal = currentRank;
+        }
+
+        document.getElementById('rank-value').innerText = currentRank;
+        document.getElementById('score').innerText = Math.floor(score);
+        document.getElementById('coins').innerText = coins;
+        
+        const hearts = document.querySelectorAll('.heart');
+        hearts.forEach((h, i) => {
+            if (i < lives) {
+                h.classList.remove('empty', 'pop', 'used');
+            } else {
+                h.classList.add('empty');
+                if (!h.classList.contains('used')) {
+                    h.classList.add('pop', 'used');
+                    // Play a 'damage' hint
+                    playSound(100, 0.1, 'sawtooth', 0.05);
+                }
+            }
+        });
+        
+        // Update survival fill if visible
+        const sFill = document.getElementById('survival-fill');
+        if (sFill) {
+            const progress = (survivedTime / WIN_TIME) * 100;
+            sFill.style.width = Math.min(100, progress) + '%';
+        }
     }
 
     function showToast(text) {

@@ -335,7 +335,6 @@
     let powerups = [];
     let particles = [];
     let roadMarkers = []; // For speed streaks and rhythm bars
-    let holograms = [];   // For wall-stuck displays
     let lastTime = 0;
     let encryptionTime = 0;
     let survivedTime = 0;
@@ -793,18 +792,6 @@
 
         // Update holograms
 
-        // Update holograms
-        if (Math.random() < 0.02) {
-            holograms.push({ 
-                z: 1500, 
-                side: Math.random() > 0.5 ? 1 : -1, 
-                type: Math.random() > 0.8 ? 'HIGH SCORE' : 'DATA FLOW' 
-            });
-        }
-        holograms = holograms.filter(h => {
-            h.z -= actualSpeed * dt * 0.15;
-            return h.z > 20;
-        });
 
         // Update Tunnel Rings (Receding Portals)
         tunnelRings = tunnelRings.map(z => {
@@ -852,35 +839,50 @@
         const zNear = 20;
         const zFar = 1500;
 
-        // 1. PHYSICAL WALL PLATING (REFINED ROUND GEOMETRY)
+        // 1. PHYSICAL WALL PLATING (RIBBED STRUCTURE)
         const segments = 24; 
         const tunnelR = 1.8; 
         const aspectScale = (canvas.width * 0.25) / trackH; 
-        const tallScale = aspectScale * 2.2; // Specifically increase height for cinematic feel
+        const tallScale = aspectScale * 2.2; 
         
         for(let i=0; i<segments; i++) {
             const angle1 = Math.PI + (i * Math.PI / segments);
             const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
             
-            // Physical coordinates (using tallScale for increased height)
-            const l1 = Math.cos(angle1) * tunnelR; const h1 = Math.sin(angle1) * tunnelR * tallScale + 1;
-            const l2 = Math.cos(angle2) * tunnelR; const h2 = Math.sin(angle2) * tunnelR * tallScale + 1;
+            // Wall Panel Colors (Dark Obsidian with vertical depth)
+            const vGrad = ctx.createLinearGradient(0, trackY - 100, 0, trackY + 100);
+            vGrad.addColorStop(0, '#010105'); vGrad.addColorStop(1, '#05051a');
+            ctx.fillStyle = vGrad;
             
-            const v1 = getV(l1, h1, zNear); const v2 = getV(l2, h2, zNear);
-            const v3 = getV(l2, h2, zFar);  const v4 = getV(l1, h1, zFar);
+            const v1 = getV(Math.cos(angle1) * tunnelR, Math.sin(angle1) * tunnelR * tallScale + 1, zNear);
+            const v2 = getV(Math.cos(angle2) * tunnelR, Math.sin(angle2) * tunnelR * tallScale + 1, zNear);
+            const v3 = getV(Math.cos(angle2) * tunnelR, Math.sin(angle2) * tunnelR * tallScale + 1, zFar);
+            const v4 = getV(Math.cos(angle1) * tunnelR, Math.sin(angle1) * tunnelR * tallScale + 1, zFar);
             
-            // Matte metallic plating look
-            ctx.fillStyle = i % 2 === 0 ? '#050510' : '#08081a';
             ctx.beginPath();
             ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
             ctx.lineTo(v3.x, v3.y); ctx.lineTo(v4.x, v4.y);
             ctx.closePath(); ctx.fill();
 
-            // Subtle panel lines
-            ctx.strokeStyle = `rgba(${color}, 0.05)`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+
+            // Dark Vertical Dividers (Ribbed look)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke();
         }
+
+        // 1.2 STRUCTURAL ANCHORING (Glow at road-wall junction)
+        const drawAnchor = (side) => {
+            const pNear = getV(side * tunnelR, 1, zNear);
+            const pFar = getV(side * tunnelR, 1, zFar);
+            ctx.strokeStyle = `rgba(${color}, 0.5)`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = 15;
+            ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
+            ctx.shadowBlur = 0;
+        };
+        drawAnchor(-1); drawAnchor(1);
 
 
         // Obsidian Floor (Track) - Deeper Navy/Blue Metallic Base
@@ -940,36 +942,7 @@
             ctx.shadowBlur = 0;
         });
 
-        // 2. EMBEDDED HOLOGRAPHS
-        holograms.forEach(h => {
-            const scale = 150 / h.z;
-            if (scale > 2 || scale < 0.1) return;
-            // Position on side walls
-            const hx = canvas.width/2 + (h.side * canvas.width * 0.25) * scale * 2;
-            const hy = trackY - (canvas.height * 0.1) * scale;
-            
-            ctx.save();
-            ctx.translate(hx, hy);
-            ctx.globalAlpha = Math.min(1, scale * 2) * 0.6;
-            
-            // Hologram frame
-            ctx.strokeStyle = `rgba(${color}, 1)`;
-            ctx.lineWidth = 2 * scale;
-            ctx.strokeRect(-50*scale, -20*scale, 100*scale, 40*scale);
-            
-            ctx.fillStyle = `rgba(${color}, 0.1)`;
-            ctx.fillRect(-50*scale, -20*scale, 100*scale, 40*scale);
-            
-            ctx.fillStyle = 'white';
-            ctx.font = `${Math.floor(10 * scale)}px 'Inter', sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.fillText(h.type, 0, 0);
-            ctx.fillText(Math.floor(score/10) + (h.side > 0 ? "" : "0"), 0, 15*scale);
-            
-            ctx.restore();
-        });
-
-        // 4. MULTI-LANE NEON MARKERS (Dense glowing parallel lines)
+        // Obsidian Floor (Track)
         const drawEnhancedLane = (offset, weight, alpha) => {
             const p1 = getV(offset, 1, zNear); const p2 = getV(offset, 1, zFar);
             ctx.strokeStyle = `rgba(${color}, ${alpha})`;

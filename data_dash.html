@@ -96,6 +96,7 @@
             letter-spacing: -2px;
             margin-bottom: 8px;
             background: linear-gradient(to right, var(--primary-neon), var(--secondary-neon));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
@@ -133,66 +134,152 @@
 
         #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             z-index: 5;
             pointer-events: none;
+            font-family: 'Inter', sans-serif;
         }
 
-        .score-box {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--primary-neon);
-            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        /* --- TOP LEFT: RANK, SCORE, COINS --- */
+        .hud-left {
             display: flex;
             flex-direction: column;
+            gap: 4px;
         }
 
-        .score-label {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.5);
+        .rank-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            font-weight: 900;
         }
 
-        #encryption-timer {
-            width: 150px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        .stat-label {
+            font-size: 0.65rem;
+            color: rgba(0, 242, 255, 0.7);
+            letter-spacing: 1px;
+            margin-right: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .coin-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .coin-icon {
+            width: 18px;
+            height: 18px;
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #ff8800);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 900;
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            border: 1px solid #fff;
+        }
+
+        .coin-value {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+        }
+
+        /* --- TOP RIGHT: HEARTS, PROGRESS --- */
+        .hud-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .hearts-container {
+            display: flex;
+            gap: 4px;
+        }
+
+        .heart {
+            width: 20px;
+            height: 20px;
+            color: #ff0055;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 85, 0.5));
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        .heart.empty {
+            color: rgba(255, 255, 255, 0.1);
+            filter: none;
+        }
+
+        .heart.pop {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px) rotate(-5deg); }
+            75% { transform: translateX(2px) rotate(5deg); }
+        }
+
+        #survival-bar-container {
+            width: 160px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             overflow: hidden;
-            margin-top: 8px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #encryption-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--primary-neon);
-            box-shadow: 0 0 10px var(--primary-neon);
-        }
-
-        #survival-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
 
         #survival-fill {
             width: 0%;
             height: 100%;
-            background: var(--primary-neon);
-            box-shadow: 0 0 10px var(--primary-neon);
+            background: linear-gradient(to right, #00fff2, #00ff88);
+            box-shadow: 0 0 15px rgba(0, 255, 242, 0.6);
             transition: width 0.1s linear;
         }
+
+        #encryption-status-small {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+
+        .shield-icon {
+            width: 14px;
+            height: 14px;
+            margin-left: 6px;
+            color: #00f2ff;
+            opacity: 0.2;
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .shield-active {
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 5px #00f2ff);
+        }
+
+        /* --- Hide old HUD elements --- */
+        #encryption-timer, #survival-progress { display: none; }
 
         .cta-text {
             margin-top: 20px;
@@ -233,16 +320,31 @@
 
 <div id="game-container">
     <div id="hud">
-        <div class="score-box">
-            <span class="score-label">Secure Data Log</span>
-            <span id="score">00000</span>
-            <div id="encryption-timer"><div id="encryption-fill"></div></div>
+        <div class="hud-left">
+            <div class="rank-score-row">
+                <div><span class="stat-label">RANK</span><span id="rank-value" class="stat-value">1</span></div>
+                <div><span class="stat-label">SCORE</span><span id="score" class="stat-value">0</span></div>
+            </div>
+            <div class="coin-row">
+                <div class="coin-icon">C</div>
+                <span id="coins" class="coin-value">0</span>
+                <svg class="shield-icon" id="hud-shield" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.67-3.13 8.75-7 9.89-3.87-1.14-7-5.22-7-9.89v-4.7l7-3.12z"/>
+                </svg>
+            </div>
         </div>
-        <div class="score-box" style="text-align: right;">
-            <span class="score-label">Encryption Level</span>
-            <span id="encryption-status" style="color: rgba(255,255,255,0.2)">INACTIVE</span>
+
+        <div class="hud-right">
+            <div id="hearts" class="hearts-container">
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <svg class="heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+            <div id="survival-bar-container">
+                <div id="survival-fill"></div>
+            </div>
+            <div id="encryption-status-small">ENCRYPTION: <span id="enc-pct">0%</span></div>
         </div>
-        <div id="survival-progress"><div id="survival-fill"></div></div>
     </div>
 
     <!-- Start Overlay -->
@@ -302,11 +404,9 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score');
+    const coinsEl = document.getElementById('coins');
     const finalScoreEl = document.getElementById('final-score');
     const winScoreEl = document.getElementById('win-score');
-    const encryptionFill = document.getElementById('encryption-fill');
-    const encryptionTimer = document.getElementById('encryption-timer');
-    const encryptionStatus = document.getElementById('encryption-status');
     const survivalFill = document.getElementById('survival-fill');
     const startOverlay = document.getElementById('start-overlay');
     const gameOverOverlay = document.getElementById('game-over-overlay');
@@ -317,7 +417,6 @@
     // Game Constants
     const LANES = [-1, 0, 1];
     const HORIZON_Y = 0.35;
-    const COLLISION_RADIUS = 35;
     const WIN_TIME = 45000;
     const PLAYER_Y_POS = 0.85;
     const PLAYER_Z_SCALE = (PLAYER_Y_POS - HORIZON_Y) / (1 - HORIZON_Y);
@@ -325,19 +424,26 @@
     // Game State
     let gameState = 'START';
     let score = 0;
-    let speed = 6;
-    let baseSpeed = 6;
-    let maxSpeed = 16;
+    let coins = 0;
+    let lives = 3;
+    let speed = 4;
+    let baseSpeed = 4;
+    let maxSpeed = 12;
     let laneIndex = 1;
     let currentLanePos = 0;
     let targetLanePos = 0;
     let obstacles = [];
     let powerups = [];
     let particles = [];
+    let roadMarkers = []; // For speed streaks and rhythm bars
     let lastTime = 0;
     let encryptionTime = 0;
     let survivedTime = 0;
     let jitter = 0; // Visual glitch factor
+    let tunnelRings = []; // Structural neon portals
+    const RING_SPACING = 350; // Distance between rings
+    for(let z = 0; z < 1800; z += RING_SPACING) tunnelRings.push(z);
+    
     const ENCRYPTION_DURATION = 5000;
 
     // Audio Context
@@ -392,7 +498,7 @@
             this.z = 1200;
             this.lane = LANES[Math.floor(Math.random() * LANES.length)];
             this.type = type;
-            this.size = 50;
+            this.size = type === 'shield' ? 35 : 75;
             this.rotation = Math.random() * Math.PI * 2;
             
             // Differentiate visuals
@@ -420,28 +526,164 @@
 
             ctx.save();
             ctx.translate(screenX, screenY);
-            ctx.rotate(this.rotation);
-            // ctx.shadowBlur = 15 * scale; // DEPRECATED: Performance Bottleneck
-            // ctx.shadowColor = this.color;
+            
             ctx.strokeStyle = this.color;
-            ctx.lineWidth = 2;
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 10 * Math.min(scale, 2);
             
             if (this.type === 'shield') {
+                // --- 2D HOLOGRAPHIC PANEL (VPN) ---
+                const wallW = w * 1.5;
+                const wallH = w;
+                
+                // Base anchor glow (stuck on road)
                 ctx.beginPath();
-                ctx.moveTo(0, -w/2); ctx.lineTo(w/2, -w/4); ctx.lineTo(w/2, w/4);
-                ctx.lineTo(0, w/2); ctx.lineTo(-w/2, w/4); ctx.lineTo(-w/2, -w/4);
-                ctx.closePath(); ctx.stroke();
-                // Partyhat icon
-                ctx.fillStyle = this.color; ctx.beginPath();
-                ctx.moveTo(0, -w/6); ctx.lineTo(w/6, w/6); ctx.lineTo(-w/6, w/6); ctx.closePath(); ctx.fill();
-            } else if (this.type === 'MALWARE') {
-                ctx.strokeRect(-w/2, -w/2, w, w);
-                ctx.beginPath(); ctx.moveTo(-w/2, -w/2); ctx.lineTo(w/2, w/2); ctx.stroke();
-            } else if (this.type === 'TRACKER') {
-                ctx.beginPath(); ctx.moveTo(0, -w/2); ctx.lineTo(w/2, w/2); ctx.lineTo(-w/2, w/2); ctx.closePath(); ctx.stroke();
-            } else if (this.type === 'SNOOP') {
-                ctx.beginPath(); ctx.arc(0, 0, w/2, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(0, 0, w/4, 0, Math.PI*2); ctx.fillStyle = this.color; ctx.fill();
+                ctx.ellipse(0, 0, wallW/2 + 8, 8 * scale, 0, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.4)';
+                ctx.fill();
+
+                // Holographic translucent fill
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.1)';
+                ctx.fillRect(-wallW/2, -wallH, wallW, wallH);
+                
+                // Outer cyan border
+                ctx.lineWidth = 3 * scale;
+                ctx.strokeRect(-wallW/2, -wallH, wallW, wallH);
+                
+                // Pulsing Scanline
+                const pulseY = ((Date.now() * 0.005) % wallH);
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.8)';
+                ctx.fillRect(-wallW/2, -pulseY, wallW, 4 * scale);
+
+            } else {
+                // Obstacles rotate in 3D-ish space
+                ctx.rotate(this.rotation);
+                ctx.lineWidth = 3 * scale;
+                
+                if (this.type === 'MALWARE') {
+                    // --- ENHANCED 3D EXTRUDED RING (Red) ---
+                    ctx.restore(); ctx.save();
+                    ctx.translate(screenX, screenY);
+                    const reflectionW = w * 1.5;
+                    ctx.fillStyle = ctx.createRadialGradient(0, 0, 0, 0, 0, reflectionW/2);
+                    ctx.fillStyle.addColorStop(0, 'rgba(255, 0, 85, 0.4)');
+                    ctx.fillStyle.addColorStop(1, 'rgba(255, 0, 85, 0)');
+                    ctx.beginPath(); ctx.ellipse(0, 0, reflectionW/2, 15 * scale, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.restore(); ctx.save();
+                    ctx.translate(screenX, screenY);
+                    ctx.rotate(this.rotation);
+
+                    const depth = 20 * scale;
+                    const sides = 6;
+                    const outerR = w / 2;
+                    const innerR = w / 3.5;
+                    
+                    // Sides Shading
+                    for(let i=0; i<sides; i++) {
+                        const a1 = i * Math.PI * 2 / sides;
+                        const a2 = (i+1) * Math.PI * 2 / sides;
+                        
+                        ctx.fillStyle = (i % 2 === 0) ? 'rgba(255, 0, 85, 0.3)' : 'rgba(100, 0, 20, 0.6)';
+                        ctx.beginPath();
+                        ctx.moveTo(outerR * Math.cos(a1), outerR * Math.sin(a1));
+                        ctx.lineTo(outerR * Math.cos(a2), outerR * Math.sin(a2));
+                        ctx.lineTo(outerR * Math.cos(a2) + depth, outerR * Math.sin(a2));
+                        ctx.lineTo(outerR * Math.cos(a1) + depth, outerR * Math.sin(a1));
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    // Front Face
+                    ctx.shadowBlur = 20 * scale;
+                    ctx.shadowColor = '#ff0055';
+                    ctx.strokeStyle = '#ff0055';
+                    ctx.beginPath();
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(outerR * Math.cos(a), outerR * Math.sin(a));
+                    }
+                    ctx.stroke();
+
+                    // Hot Orange Core Detail
+                    ctx.strokeStyle = '#ffaa33';
+                    ctx.lineWidth = 1 * scale;
+                    ctx.beginPath();
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(outerR * 0.9 * Math.cos(a), outerR * 0.9 * Math.sin(a));
+                    }
+                    ctx.stroke();
+
+                } else if (this.type === 'TRACKER') {
+                    // --- 3D TETRAHEDRON (Yellow Pyramid) ---
+                    const depth = w / 2;
+                    const points = [
+                        {x: 0, y: -w/2, z: 0},
+                        {x: w/2, y: w/2, z: -depth/2},
+                        {x: -w/2, y: w/2, z: -depth/2},
+                        {x: 0, y: w/4, z: depth}
+                    ];
+                    
+                    // Simple 3D rotation and projection
+                    const angle = this.rotation;
+                    const projected = points.map(p => {
+                        const x = p.x * Math.cos(angle) - p.z * Math.sin(angle);
+                        const z = p.x * Math.sin(angle) + p.z * Math.cos(angle);
+                        return { x: x, y: p.y };
+                    });
+
+                    const drawFace = (i1, i2, i3, fill) => {
+                        ctx.fillStyle = fill;
+                        ctx.beginPath();
+                        ctx.moveTo(projected[i1].x, projected[i1].y);
+                        ctx.lineTo(projected[i2].x, projected[i2].y);
+                        ctx.lineTo(projected[i3].x, projected[i3].y);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    };
+
+                    drawFace(0, 1, 2, 'rgba(255, 204, 0, 0.1)');
+                    drawFace(0, 1, 3, 'rgba(255, 204, 0, 0.4)');
+                    drawFace(0, 2, 3, 'rgba(255, 204, 0, 0.2)');
+                    
+                    // Central "Eye" core
+                    ctx.beginPath();
+                    ctx.arc(0, 0, w/10, 0, Math.PI*2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+
+                } else if (this.type === 'SNOOP') {
+                    // --- HEXAGONAL THREAT FRAME (Red) ---
+                    const sides = 6;
+                    const r = w / 2;
+                    ctx.strokeStyle = '#ff0055';
+                    ctx.shadowColor = '#ff0055';
+                    ctx.shadowBlur = 15 * scale;
+                    ctx.lineWidth = 4 * scale;
+                    
+                    // Outer Hex Frame
+                    ctx.beginPath();
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
+                    }
+                    ctx.stroke();
+                    
+                    // Inner "Fragmented" Detail
+                    ctx.beginPath();
+                    ctx.lineWidth = 2 * scale;
+                    for(let i=0; i<sides; i++) {
+                        if (i % 2 === 0) { // Only draw half the segments for fragmentation
+                            const a1 = i * Math.PI * 2 / sides;
+                            const a2 = (i + 1) * Math.PI * 2 / sides;
+                            ctx.moveTo(r * 0.7 * Math.cos(a1), r * 0.7 * Math.sin(a1));
+                            ctx.lineTo(r * 0.7 * Math.cos(a2), r * 0.7 * Math.sin(a2));
+                        }
+                    }
+                    ctx.stroke();
+                }
             }
             ctx.restore();
         }
@@ -450,30 +692,44 @@
             const scale = 150 / this.z;
             const screenX = canvas.width / 2 + (this.lane * (canvas.width * 0.25) * scale);
             const screenY = canvas.height * HORIZON_Y + (canvas.height * (1 - HORIZON_Y) * scale);
-            return { x: screenX, y: screenY, r: COLLISION_RADIUS * scale * 3 };
+            // Dynamic collision radius based on visual size
+            return { x: screenX, y: screenY, r: (this.size * 0.7) * scale * 3 };
         }
     }
 
     class Particle {
-        constructor(x, y, color, char = null) {
+        constructor(x, y, color, type = 'pixel') {
             this.x = x; this.y = y;
             this.vx = (Math.random() - 0.5) * 10;
             this.vy = (Math.random() - 0.5) * 10;
             this.life = 1.0;
             this.color = color;
-            this.char = char;
+            this.type = type; // 'pixel', 'hex', or a character
+            this.rotation = Math.random() * Math.PI;
         }
         update() {
             this.x += this.vx; this.y += this.vy;
+            this.rotation += 0.1;
             this.life -= 0.02;
             return this.life > 0;
         }
         draw() {
             ctx.globalAlpha = this.life;
             ctx.fillStyle = this.color;
-            if (this.char) {
+            if (this.type === 'hex') {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.beginPath();
+                for(let i=0; i<6; i++) {
+                    const a = i * Math.PI * 2 / 6;
+                    ctx.lineTo(6 * Math.cos(a), 6 * Math.sin(a));
+                }
+                ctx.closePath(); ctx.fill();
+                ctx.restore();
+            } else if (this.type.length === 1) { // character
                 ctx.font = '12px monospace';
-                ctx.fillText(this.char, this.x, this.y);
+                ctx.fillText(this.type, this.x, this.y);
             } else {
                 ctx.fillRect(this.x, this.y, 4, 4);
             }
@@ -483,11 +739,13 @@
 
     function startGame() {
         gameState = 'PLAYING';
-        score = 0; survivedTime = 0; jitter = 0;
-        speed = baseSpeed = 6;
+        score = 0; coins = 0; lives = 3; survivedTime = 0; jitter = 0;
+        lastRankVal = 1;
+        speed = baseSpeed = 4;
         encryptionTime = 0;
         laneIndex = 1; targetLanePos = currentLanePos = 0;
         obstacles = []; powerups = []; particles = [];
+        roadMarkers = [];
         lastTime = performance.now();
         
         startOverlay.classList.add('hidden');
@@ -495,10 +753,22 @@
         winOverlay.classList.add('hidden');
         container.style.filter = 'none';
         
-        encryptionTimer.style.opacity = '0';
-        encryptionStatus.innerText = 'INACTIVE';
-        encryptionStatus.style.color = 'rgba(255,255,255,0.2)';
-        survivalFill.style.width = '0%';
+        updateHUD();
+        const hList = document.querySelectorAll('.heart');
+        hList.forEach(h => h.classList.remove('pop', 'used', 'empty'));
+        if (survivalFill) survivalFill.style.width = '0%';
+
+        // Initialize some road markers for immediate movement
+        for(let i=0; i<10; i++) {
+            roadMarkers.push({z: i * 150, type: Math.random() > 0.7 ? 'bar' : 'streak', lane: Math.floor(Math.random()*3)-1});
+        }
+        
+        holograms = [];
+
+        holograms = [];
+        for(let i=0; i<3; i++) {
+            holograms.push({ z: 1000 + i * 400, side: i % 2 === 0 ? 1 : -1, type: i === 0 ? 'SCORE' : 'HIGH SCORE' });
+        }
 
         requestAnimationFrame(gameLoop);
         playSound(200, 0.4, 'square', 0.05);
@@ -532,9 +802,7 @@
     function update(dt) {
         survivedTime += dt;
         score += speed * dt * 0.01;
-        scoreEl.innerText = Math.floor(score).toString().padStart(5, '0');
-        
-        survivalFill.style.width = Math.min(100, (survivedTime / WIN_TIME) * 100) + '%';
+        updateHUD();
         if (survivedTime >= WIN_TIME) { endGame(true); return; }
 
         speed = Math.min(maxSpeed, baseSpeed + (score / 1500));
@@ -552,12 +820,12 @@
 
         if (encryptionTime > 0) {
             encryptionTime -= dt;
-            const pct = (encryptionTime / ENCRYPTION_DURATION) * 100;
-            encryptionFill.style.width = pct + '%';
+            const pct = Math.floor((encryptionTime / ENCRYPTION_DURATION) * 100);
+            document.getElementById('enc-pct').innerText = pct + '%';
+            document.getElementById('hud-shield').classList.add('shield-active');
             if (encryptionTime <= 0) {
-                encryptionTimer.style.opacity = '0';
-                encryptionStatus.innerText = 'INACTIVE';
-                encryptionStatus.style.color = 'rgba(255,255,255,0.2)';
+                document.getElementById('enc-pct').innerText = '0%';
+                document.getElementById('hud-shield').classList.remove('shield-active');
             }
         }
 
@@ -569,12 +837,22 @@
             const r = obj.getRect();
             if (Math.hypot(r.x - px, r.y - py) < 50 && obj.z < 250) {
                 if (encryptionTime > 0) {
-                    score += 200; createExplosion(r.x, r.y, obj.color, true);
+                    score += 200; coins += 5; // Smashing malware gives coins
+                    createExplosion(r.x, r.y, obj.color, true);
                     playSound(500, 0.1, 'sine', 0.05); showToast('SMASH +200');
+                    updateHUD();
                     return false;
                 } else {
                     switch(obj.type) {
-                        case 'MALWARE': endGame(false); break;
+                        case 'MALWARE': 
+                            lives--; 
+                            if (lives <= 0) endGame(false); 
+                            else {
+                                playSound(100, 0.2, 'sawtooth', 0.1);
+                                showToast('CONNECTION LOST!');
+                                jitter = 500;
+                            }
+                            break;
                         case 'TRACKER': 
                             baseSpeed = Math.max(3, baseSpeed - 2); 
                             score = Math.max(0, score - 100); 
@@ -587,6 +865,7 @@
                             showToast('SNOOPED! GLITCH'); break;
                     }
                     createExplosion(r.x, r.y, obj.color, true);
+                    updateHUD();
                     return false;
                 }
             }
@@ -598,17 +877,83 @@
             const r = obj.getRect();
             if (Math.hypot(r.x - px, r.y - py) < 60 && obj.z < 250) {
                 encryptionTime = ENCRYPTION_DURATION;
-                encryptionTimer.style.opacity = '1';
-                encryptionStatus.innerText = 'ENCRYPTED';
-                encryptionStatus.style.color = 'var(--primary-neon)';
+                coins += 10;
                 createExplosion(px, py, '#00f2ff', true);
                 playSound(600, 0.3, 'sine', 0.08);
+                updateHUD();
                 return false;
             }
             return alive;
         });
 
+        // Update road markers (speed streaks)
+        if (Math.random() < 0.15) {
+            roadMarkers.push({
+                z: 1500, 
+                type: Math.random() > 0.8 ? 'bar' : 'streak', 
+                lane: Math.floor(Math.random()*3)-1
+            });
+        }
+        roadMarkers = roadMarkers.filter(m => {
+            m.z -= actualSpeed * dt * 0.15;
+            return m.z > 20;
+        });
+
+        // Update holograms
+
+
+        // Update Tunnel Rings (Receding Portals)
+        tunnelRings = tunnelRings.map(z => {
+            let nextZ = z - actualSpeed * dt * 0.15;
+            if (nextZ < 0) nextZ += (tunnelRings.length * RING_SPACING);
+            return nextZ;
+        });
+        tunnelRings.sort((a, b) => b - a); // Draw further rings first
+
         particles = particles.filter(p => p.update());
+    }
+
+    let lastRankVal = 1;
+    function updateHUD() {
+        if (gameState === 'START') return;
+        
+        // Upward Rank Progression (1 -> 5+)
+        let currentRank = 1;
+        if (score >= 2000)      currentRank = 5;
+        else if (score >= 1000)  currentRank = 4;
+        else if (score >= 500)   currentRank = 3;
+        else if (score >= 200)   currentRank = 2;
+        
+        // Rank Up Notification (Announce when rank increases)
+        if (currentRank > lastRankVal) {
+            showToast('RANK UP: ' + currentRank);
+            playSound(800, 0.2, 'sine', 0.1); 
+            lastRankVal = currentRank;
+        }
+
+        document.getElementById('rank-value').innerText = currentRank;
+        document.getElementById('score').innerText = Math.floor(score);
+        document.getElementById('coins').innerText = coins;
+        
+        const hearts = document.querySelectorAll('.heart');
+        hearts.forEach((h, i) => {
+            if (i < lives) {
+                h.classList.remove('empty', 'pop', 'used');
+            } else {
+                h.classList.add('empty');
+                if (!h.classList.contains('used')) {
+                    h.classList.add('pop', 'used');
+                    playSound(100, 0.1, 'sawtooth', 0.05);
+                }
+            }
+        });
+        
+        // Update survival fill if visible
+        const sFill = document.getElementById('survival-fill');
+        if (sFill) {
+            const progress = (survivedTime / WIN_TIME) * 100;
+            sFill.style.width = Math.min(100, progress) + '%';
+        }
     }
 
     function showToast(text) {
@@ -629,60 +974,493 @@
     }
 
     function drawTunnel() {
-        const color = encryptionTime > 0 ? '0, 242, 255' : '255, 0, 234';
-        const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 0.2;
-        ctx.lineWidth = 1.5; 
-        // ctx.shadowBlur = 15; // DEPRECATED: Performance Bottleneck
-        // ctx.shadowColor = `rgb(${color})`;
-        for (let i = -1.5; i <= 1.5; i += 1) {
-            const x1 = canvas.width / 2 + (i * (canvas.width * 0.25) * 0.01);
-            const y1 = canvas.height * HORIZON_Y;
-            const x2 = canvas.width / 2 + (i * (canvas.width * 0.25) * 10);
-            const y2 = canvas.height;
-            ctx.strokeStyle = `rgba(${color}, ${pulse})`;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        const color = encryptionTime > 0 ? '180, 255, 255' : '0, 242, 255';
+        const trackY = canvas.height * HORIZON_Y;
+        const trackH = canvas.height * (1 - HORIZON_Y);
+        
+        // PERFORMANCE FIX: Pre-calculate Gradients once per frame (not in segments loop)
+        const wallVGrad = ctx.createLinearGradient(0, trackY - 100, 0, trackY + 100);
+        wallVGrad.addColorStop(0, '#010105'); wallVGrad.addColorStop(1, '#05051a');
+        const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
+        floorGrad.addColorStop(0, '#010108'); floorGrad.addColorStop(0.5, '#05052a'); floorGrad.addColorStop(1, '#020210');
+        const bloomGrad = ctx.createRadialGradient(canvas.width/2, canvas.height * 0.7, 0, canvas.width/2, canvas.height * 0.7, canvas.width * 0.6);
+        bloomGrad.addColorStop(0, `rgba(${color}, 0.25)`); bloomGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        // Perspective tool
+        const getV = (laneX, heightY, z) => {
+            const scale = 150 / z;
+            return {
+                x: canvas.width / 2 + (laneX * (canvas.width * 0.25) * scale),
+                y: trackY + (heightY * trackH * scale)
+            };
+        };
+
+        const zNear = 20;
+        const zFar = 1500;
+
+        // 1. PHYSICAL WALL PLATING (RIBBED STRUCTURE)
+        const segments = 24; 
+        const tunnelR = 1.8; 
+        const aspectScale = (canvas.width * 0.25) / trackH; 
+        const tallScale = aspectScale * 2.2; 
+        
+        for(let i=0; i<segments; i++) {
+            const angle1 = Math.PI + (i * Math.PI / segments);
+            const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
+            
+            ctx.fillStyle = wallVGrad;
+            
+            const v1 = getV(Math.cos(angle1) * tunnelR, Math.sin(angle1) * tunnelR * tallScale + 1, zNear);
+            const v2 = getV(Math.cos(angle2) * tunnelR, Math.sin(angle2) * tunnelR * tallScale + 1, zNear);
+            const v3 = getV(Math.cos(angle2) * tunnelR, Math.sin(angle2) * tunnelR * tallScale + 1, zFar);
+            const v4 = getV(Math.cos(angle1) * tunnelR, Math.sin(angle1) * tunnelR * tallScale + 1, zFar);
+            
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
+            ctx.lineTo(v3.x, v3.y); ctx.lineTo(v4.x, v4.y);
+            ctx.closePath(); ctx.fill();
+
+            // Dark Vertical Dividers
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke();
         }
-        const time = (Date.now() * 0.001 * speed) % 1;
-        for (let j = 0; j < 10; j++) {
-            const z = (j - time) / 10; if (z < 0) continue;
-            const y = canvas.height * HORIZON_Y + (canvas.height * (1 - HORIZON_Y) * z);
-            const w = canvas.width * z * 8;
-            ctx.strokeStyle = `rgba(${color}, ${z * 0.4})`;
-            ctx.beginPath(); ctx.moveTo(canvas.width/2 - w/2, y); ctx.lineTo(canvas.width/2 + w/2, y); ctx.stroke();
+
+        // 1.2 STRUCTURAL ANCHORING (Glow at road-wall junction)
+        const drawAnchor = (side) => {
+            const pNear = getV(side * tunnelR, 1, zNear);
+            const pFar = getV(side * tunnelR, 1, zFar);
+            // PERFORMANCE FIX: Replace shadowBlur with alpha-stroke
+            ctx.strokeStyle = `rgba(${color}, 0.2)`;
+            ctx.lineWidth = 8;
+            ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
+            
+            ctx.strokeStyle = `rgba(${color}, 0.6)`;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        };
+        drawAnchor(-1); drawAnchor(1);
+
+
+        // Obsidian Floor (Track) - Deeper Navy/Blue Metallic Base
+        ctx.fillStyle = floorGrad;
+        const f1 = getV(-2.5, 1, zNear); const f2 = getV(2.5, 1, zNear);
+        const f3 = getV(2.5, 1, zFar);  const f4 = getV(-2.5, 1, zFar);
+        ctx.beginPath(); ctx.moveTo(f1.x, f1.y); ctx.lineTo(f2.x, f2.y);
+        ctx.lineTo(f3.x, f3.y); ctx.lineTo(f4.x, f4.y); ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = bloomGrad;
+        ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
+
+        // 1.3 SIDE WALL LINES (4 Thick, Multi-Colored 'Data Ribbon' lines)
+        const wallColors = ['0, 242, 255', '255, 0, 234', '0, 255, 120', '255, 140, 0'];
+        const drawWallLines = (side) => {
+            for(let i=0; i<4; i++) {
+                const hFactor = 0.1 + i * 0.04; 
+                const angle = 1.5 * Math.PI + side * (1 - hFactor) * 0.48 * Math.PI;
+                
+                const pNear = getV(Math.cos(angle) * tunnelR, Math.sin(angle) * tunnelR * tallScale + 1, zNear);
+                const pFar  = getV(Math.cos(angle) * tunnelR, Math.sin(angle) * tunnelR * tallScale + 1, zFar);
+                
+                const lColor = wallColors[i % wallColors.length];
+                
+                // PERFORMANCE FIX: Replace shadowBlur with 2-layer stroke
+                ctx.strokeStyle = `rgba(${lColor}, 0.2)`;
+                ctx.lineWidth = 12;
+                ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
+                
+                ctx.strokeStyle = `rgb(${lColor})`;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+            }
+        };
+        drawWallLines(-1); drawWallLines(1);
+
+        // 1.4 DATA PANELS / WALL MODULES (Segmented glowing units on walls)
+        const drawPanel = (z, side, angleFactor, pWidth, pLength, color) => {
+            const angleStart = 1.5 * Math.PI + side * angleFactor * Math.PI;
+            const angleEnd   = angleStart + side * 0.15 * Math.PI;
+            
+            const p1 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z);
+            const p2 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z);
+            const p3 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z + pLength);
+            const p4 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z + pLength);
+            
+            const pAlpha = Math.min(0.6, (zFar - z) / zFar);
+            ctx.fillStyle = `rgba(${color}, ${pAlpha * 0.15})`;
+            ctx.strokeStyle = `rgba(${color}, ${pAlpha * 0.8})`;
+            ctx.lineWidth = 1.5;
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            
+            // Subtle Internal Data Line
+            const mid1 = { x: (p1.x + p4.x)/2, y: (p1.y + p4.y)/2 };
+            const mid2 = { x: (p2.x + p3.x)/2, y: (p2.y + p3.y)/2 };
+            ctx.beginPath(); ctx.moveTo(mid1.x, mid1.y); ctx.lineTo(mid2.x, mid2.y); ctx.stroke();
+        };
+
+        // Optimized Panel Count: Only draw near-field panels
+        tunnelRings.forEach((rz, idx) => {
+            if (rz < zNear || rz > zFar - 650) return;
+            const pColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
+            drawPanel(rz + 50, -1, 0.2, 0.1, 120, pColor);
+            drawPanel(rz + 100, 1, 0.15, 0.1, 150, pColor);
+        });
+
+        // 1.5 STRUCTURAL TUNNEL RINGS (High-Fidelity 'Ribbed' Portals - Matches Concept Art)
+        // 4 vibrant neon colors with highly saturated accents
+        const ringColorPalette = [
+            { main: '0, 242, 255',   accent: '200, 255, 255' },  // Cyan
+            { main: '255, 0, 234',   accent: '255, 200, 255' },  // Magenta
+            { main: '0, 255, 120',   accent: '200, 255, 220' },  // Green
+            { main: '255, 140, 0',   accent: '255, 230, 200' },  // Orange
+        ];
+
+        // 1.5.1 CEILING LIGHT TUBES (Discrete bars between rings)
+        const drawCeilingTube = (z1, z2) => {
+            const startZ = z1 + 40;
+            const endZ   = z2 - 40;
+            if (startZ >= endZ) return;
+            const tAngle = 1.5 * Math.PI;
+            const p1 = getV(Math.cos(tAngle - 0.12) * tunnelR, Math.sin(tAngle - 0.12) * tunnelR * tallScale + 1, startZ);
+            const p2 = getV(Math.cos(tAngle + 0.12) * tunnelR, Math.sin(tAngle + 0.12) * tunnelR * tallScale + 1, startZ);
+            const p3 = getV(Math.cos(tAngle + 0.12) * tunnelR, Math.sin(tAngle + 0.12) * tunnelR * tallScale + 1, endZ);
+            const p4 = getV(Math.cos(tAngle - 0.12) * tunnelR, Math.sin(tAngle - 0.12) * tunnelR * tallScale + 1, endZ);
+
+            const tAlpha = Math.min(0.8, (zFar - startZ) / zFar);
+            // Replace shadowBlur with 2-layer fill
+            ctx.fillStyle = `rgba(0, 242, 255, ${tAlpha * 0.1})`;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = `rgba(255, 255, 255, ${tAlpha})`;
+            ctx.lineWidth = 1.5 * (150 / startZ);
+            ctx.stroke();
+        };
+
+        const sortedRings = [...tunnelRings].sort((a, b) => a - b);
+        for(let i=0; i<sortedRings.length - 1; i++) {
+            if (sortedRings[i] < zNear || sortedRings[i+1] > zFar) continue;
+            drawCeilingTube(sortedRings[i], sortedRings[i+1]);
         }
-        ctx.shadowBlur = 0;
+
+        tunnelRings.forEach((rz, idx) => {
+            if (rz < zNear || rz > zFar) return;
+            const scale = 150 / rz;
+            const ringAlpha = Math.min(0.95, 0.45 + (zFar - rz) / (zFar * 0.7));
+            const palette = ringColorPalette[idx % ringColorPalette.length];
+            const rColor  = palette.main;
+            const aColor  = palette.accent;
+
+            const roadY = getV(0, 1, rz).y;
+            const rxBase = (getV(tunnelR, 1, rz).x - getV(-tunnelR, 1, rz).x) / 2;
+            const cx = getV(0, 1, rz).x;
+            const ryBase = roadY - getV(0, 1 - tunnelR * tallScale, rz).y;
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, canvas.width, roadY + 2);
+            ctx.clip();
+
+            // PERFORMANCE FIX: Replace shadowBlur with multi-stroke layering
+            // Layer 1: Broad Atmos Glow
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha * 0.15})`;
+            ctx.lineWidth = 35 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase, ryBase, 0, Math.PI, Math.PI * 2); ctx.stroke();
+
+            // Layer 2: Ribbon Rails (Middle thick rail)
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
+            ctx.lineWidth = 10 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase, ryBase, 0, Math.PI, Math.PI * 2); ctx.stroke();
+
+            // Layer 3: Inner rail highlight
+            ctx.strokeStyle = `rgba(${aColor}, ${ringAlpha})`;
+            ctx.lineWidth = 3 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase - 8*scale, ryBase - 8*scale, 0, Math.PI, Math.PI * 2); ctx.stroke();
+            
+            ctx.restore();
+        });
+
+        // Obsidian Floor (Track)
+        const drawEnhancedLane = (offset, weight, alpha) => {
+            const p1 = getV(offset, 1, zNear); const p2 = getV(offset, 1, zFar);
+            ctx.strokeStyle = `rgba(${color}, ${alpha})`;
+            ctx.lineWidth = weight;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = weight * 5;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            ctx.shadowBlur = 0;
+        };
+
+        // Main Lane Dividers (Sharp, distinct boundary markers)
+        drawEnhancedLane(-1.5, 2.5, 0.8); drawEnhancedLane(1.5, 2.5, 0.8);
+        drawEnhancedLane(-0.5, 2, 0.4); drawEnhancedLane(0.5, 2, 0.4);
+        
+        // OUTER TRACK GLOW (Broad single edges, no extra lane-like lines)
+        drawEnhancedLane(-1.6, 6, 0.3); // Broad left glow
+        drawEnhancedLane(1.6, 6, 0.3);  // Broad right glow
+
+        // Far Horizon Glow (Subtle atmosphere focus, not a sphere)
+        const hGrad = ctx.createRadialGradient(canvas.width/2, trackY, 0, canvas.width/2, trackY, 200);
+        hGrad.addColorStop(0, `rgba(${color}, 0.1)`);
+        hGrad.addColorStop(0.5, `rgba(${color}, 0.05)`);
+        hGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = hGrad;
+        ctx.beginPath();
+        // Wider, flatter ellipse to create a horizontal horizon-line glow effect
+        ctx.ellipse(canvas.width/2, trackY, 300, 35, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        roadMarkers.forEach(m => {
+            const scale = 150 / m.z;
+            const markerAlpha = Math.min(0.8, scale * 3);
+            
+            // Draw as discrete horizontal "Data Pulses"
+            const w = (canvas.width * 0.25) * scale;
+            const h = (canvas.height * 0.1) * scale;
+            const v = getV(m.lane, 0.99, m.z);
+            
+            ctx.fillStyle = `rgba(${color}, ${markerAlpha})`;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = 15 * scale;
+            
+            // Short horizontal bar
+            const barW = 60 * scale;
+            const barH = 4 * scale;
+            ctx.fillRect(v.x - barW/2, v.y - barH/2, barW, barH);
+            
+            ctx.shadowBlur = 0;
+        });
+
     }
+
 
     function drawPlayer() {
         const x = canvas.width/2 + currentLanePos * PLAYER_Z_SCALE;
         const y = canvas.height * PLAYER_Y_POS;
-        ctx.save(); ctx.translate(x, y); ctx.rotate((targetLanePos - currentLanePos) * 0.02);
+        const t = Date.now();
+        const tilt = (targetLanePos - currentLanePos) * 0.025;
+        const hover = Math.sin(t * 0.003) * 6; // gentle hover bob
 
+        ctx.save();
+        ctx.translate(x, y + hover - 40); // Lift up slightly
+        // Remove rotation tilt as per user request for smoother glide
+        // ctx.rotate(tilt); 
+
+        // Scale up to better match the prominent size in concept
+        ctx.scale(1.2, 1.2);
+
+        // --- HOVERBOARD (Sleek Tapered Figure-8 Shape) ---
+        // Board shadow
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(0, 60, 50, 12, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Main board body (tapered rounded rectangle)
+        const bw = 45; // Board width half
+        const bh = 5;  // Board height half
+        ctx.beginPath();
+        ctx.moveTo(-bw, 55);
+        ctx.bezierCurveTo(-bw-5, 55, -bw-5, 65, -bw, 65); // Left rounded cap
+        ctx.bezierCurveTo(-15, 68, 15, 68, bw, 65);     // Bottom edge with subtle taper
+        ctx.bezierCurveTo(bw+5, 65, bw+5, 55, bw, 55);  // Right rounded cap
+        ctx.bezierCurveTo(15, 52, -15, 52, -bw, 55);    // Top edge with subtle taper
+        ctx.closePath();
+        
+        // Solid dark base
+        ctx.fillStyle = '#050510';
+        ctx.fill();
+
+        // Inner Purple/Blue Glow Core
+        let boardGrad = ctx.createRadialGradient(0, 60, 0, 0, 60, 45);
+        boardGrad.addColorStop(0, 'rgba(100, 0, 255, 0.4)');
+        boardGrad.addColorStop(0.6, 'rgba(50, 0, 150, 0.1)');
+        boardGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = boardGrad;
+        ctx.fill();
+
+        // Outer cyan edge glow
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Thruster exhaust underneath board (concept shows small jets)
+        const trailLen = Math.sin(t*0.02)*8 + 20;
+        const thrusterY = 65;
+        [-25, 25].forEach(tx => {
+            const tGrad = ctx.createLinearGradient(tx, thrusterY, tx, thrusterY + trailLen);
+            tGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
+            tGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
+            ctx.fillStyle = tGrad;
+            ctx.beginPath(); ctx.ellipse(tx, thrusterY, 5, trailLen, 0, 0, Math.PI*2); ctx.fill();
+        });
+
+        // Front glowing bumper segment (bright white core cyan aura)
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.roundRect(-10, 57, 20, 3, 1.5);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // --- ORANGE ANTENNAE/ARMS (Side-Mounted Glowing Loops) ---
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#ff5500';
+        ctx.shadowBlur = 15;
+        
+        // Left Antenna (Vertical elliptical ring on the side)
+        ctx.beginPath();
+        ctx.ellipse(-42, 5, 8, 18, 0, 0, Math.PI * 2); 
+        ctx.stroke();
+
+        // Right Antenna (Vertical elliptical ring on the side)
+        ctx.beginPath();
+        ctx.ellipse(42, 5, 8, 18, 0, 0, Math.PI * 2); 
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // --- THE SHIELD BUBBLE (Geodesic / Hexagonal Sphere) ---
         if (encryptionTime > 0) {
-            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0, 242, 255, 0.6)';
+            const shieldGlow = 0.95;
+            const shieldPulse = Math.sin(t * 0.01) * 4;
+            const radius = 80 + shieldPulse;
+            
+            ctx.save();
             ctx.beginPath();
-            const angle = Date.now() * 0.005;
-            for(let i=0; i<6; i++) {
-                const a = angle + (Math.PI/3) * i;
-                ctx.lineTo(Math.cos(a)*60, Math.sin(a)*60);
+            ctx.arc(0, 0, radius, 0, Math.PI*2);
+            
+            let shieldGrad = ctx.createRadialGradient(0, 0, 40, 0, 0, radius);
+            shieldGrad.addColorStop(0, `rgba(0, 242, 255, ${0.05 * shieldGlow})`);
+            shieldGrad.addColorStop(0.7, `rgba(0, 242, 255, ${0.3 * shieldGlow})`);
+            shieldGrad.addColorStop(1, `rgba(0, 242, 255, ${0.8 * shieldGlow})`);
+            
+            ctx.fillStyle = shieldGrad;
+            ctx.fill();
+
+            // Hexagonal Grid Mesh Effect
+            ctx.strokeStyle = `rgba(0, 242, 255, ${0.4 * shieldGlow})`;
+            ctx.lineWidth = 1;
+            const hexSize = 15;
+            const rows = 12;
+            const cols = 12;
+            
+            // Draw a fake hex grid within the circle clipping
+            ctx.clip();
+            for(let q = -cols; q <= cols; q++) {
+                for(let r = -rows; r <= rows; r++) {
+                    const hx = hexSize * 1.5 * q;
+                    const hy = hexSize * Math.sqrt(3) * (r + q/2);
+                    // Draw hex lines
+                    ctx.beginPath();
+                    for(let i=0; i<6; i++) {
+                        const angle = i * Math.PI / 3;
+                        ctx.lineTo(hx + hexSize * Math.cos(angle), hy + hexSize * Math.sin(angle));
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
             }
-            ctx.closePath(); ctx.stroke();
-            // ctx.shadowBlur = 25; ctx.shadowColor = 'var(--primary-neon)';
+            ctx.restore();
+
+            // Bright Outer Rim
+            ctx.strokeStyle = `rgba(0, 242, 255, ${shieldGlow})`;
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#00f2ff';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
 
-        ctx.fillStyle = 'white';
-        ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(25, 15); ctx.lineTo(0, 8); ctx.lineTo(-25, 15); ctx.closePath(); ctx.fill();
+        // --- PLAYER SPHERE BODY (Dark Volumetric Metal) ---
+        ctx.beginPath();
+        ctx.arc(0, 5, 42, 0, Math.PI*2);
+        ctx.fillStyle = '#0a0d1d'; // Deep metallic navy
+        ctx.fill();
+        
+        // Volumetric lighting
+        let shadingGen = ctx.createRadialGradient(-12, -12, 10, 0, 0, 42);
+        shadingGen.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        shadingGen.addColorStop(0.4, 'rgba(10, 15, 40, 0.1)');
+        shadingGen.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+        ctx.fillStyle = shadingGen;
+        ctx.fill();
 
-        const glow = Math.sin(Date.now() * 0.02) * 8 + 10;
-        ctx.fillStyle = encryptionTime > 0 ? 'var(--primary-neon)' : 'var(--secondary-neon)';
-        ctx.fillRect(-15, 15, 8, glow); ctx.fillRect(7, 15, 8, glow);
+        // Rim Light
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // --- CONCEPT BANDS / STRIPES (Based on pixel-by-pixel analysis) ---
+        function drawGlowStripe(y, rX, rY, color, width, alpha = 1) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.ellipse(0, y, rX, rY, 0, 0, Math.PI*2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Horizontal Bands (Cyan)
+        drawGlowStripe(-18, 30, 8, '#00f2ff', 2);
+        drawGlowStripe(25, 32, 10, '#00f2ff', 2.5);
+        
+        // Multi-segmented Mid Band (Orange)
+        drawGlowStripe(5, 42, 12, '#ffaa00', 5, 0.8);
+        drawGlowStripe(14, 38, 10, '#ff5500', 3, 0.6);
+
+        // --- CENTRAL GLOWING EYE (Core focus) ---
+        const eyeX = 0;
+        const eyeY = 5;
+        
+        // Outer cyan ring
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 16, 0, Math.PI*2);
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // White core aura
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 10, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        
+        // Brightest center
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 4, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
         ctx.restore();
     }
 
+
     function createExplosion(x, y, color, binary = false) {
         for (let i = 0; i < 20; i++) {
-            const char = binary ? (Math.random() > 0.5 ? '0' : '1') : null;
-            particles.push(new Particle(x, y, color, char));
+            const type = binary ? (Math.random() > 0.5 ? '1' : '0') : 'hex';
+            particles.push(new Particle(x, y, color, type));
         }
     }
 

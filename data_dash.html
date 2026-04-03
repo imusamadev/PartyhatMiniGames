@@ -987,6 +987,46 @@
             { main: '255, 140, 0',   accent: '255, 230, 200' },  // Orange
         ];
 
+        // 1.5.1 CEILING LIGHT TUBES (Discrete bars between rings)
+        const drawCeilingTube = (z1, z2) => {
+            const tubeGap = 40; // Gaps near rings
+            const startZ = z1 + tubeGap;
+            const endZ   = z2 - tubeGap;
+            if (startZ >= endZ) return;
+
+            const tWidth = 0.12; 
+            const tAngle = 1.5 * Math.PI; // Dead center top
+            
+            const p1 = getV(Math.cos(tAngle - tWidth) * tunnelR, Math.sin(tAngle - tWidth) * tunnelR * tallScale + 1, startZ);
+            const p2 = getV(Math.cos(tAngle + tWidth) * tunnelR, Math.sin(tAngle + tWidth) * tunnelR * tallScale + 1, startZ);
+            const p3 = getV(Math.cos(tAngle + tWidth) * tunnelR, Math.sin(tAngle + tWidth) * tunnelR * tallScale + 1, endZ);
+            const p4 = getV(Math.cos(tAngle - tWidth) * tunnelR, Math.sin(tAngle - tWidth) * tunnelR * tallScale + 1, endZ);
+
+            const tAlpha = Math.min(0.8, (zFar - startZ) / zFar);
+            ctx.shadowColor = `rgb(0, 242, 255)`;
+            ctx.shadowBlur = 25 * (150 / startZ);
+            ctx.fillStyle = `rgba(0, 242, 255, ${tAlpha * 0.4})`;
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Hot White Core (Makes it look like a tube light)
+            ctx.strokeStyle = `rgba(255, 255, 255, ${tAlpha})`;
+            ctx.lineWidth = 2 * (150 / startZ);
+            ctx.shadowBlur = 10 * (150 / startZ);
+            ctx.stroke();
+        };
+
+        // Draw tubes between the receding rings
+        const sortedRings = [...tunnelRings].sort((a, b) => a - b);
+        for(let i=0; i<sortedRings.length - 1; i++) {
+            if (sortedRings[i] < zNear || sortedRings[i+1] > zFar) continue;
+            drawCeilingTube(sortedRings[i], sortedRings[i+1]);
+        }
+
         tunnelRings.forEach((rz, idx) => {
             if (rz < zNear || rz > zFar) return;
             const scale = 150 / rz;

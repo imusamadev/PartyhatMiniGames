@@ -903,42 +903,72 @@
         ctx.fillStyle = bloomGrad;
         ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
 
-        // 1.5 STRUCTURAL TUNNEL RINGS (Receding Portals - Round & Prominent)
+        // 1.5 STRUCTURAL TUNNEL RINGS (High-Fidelity 'Ribbed' Portals - Matches Concept Art)
+        // 4 vibrant neon colors with highly saturated accents
+        const ringColorPalette = [
+            { main: '0, 242, 255',   accent: '200, 255, 255' },  // Cyan
+            { main: '255, 0, 234',   accent: '255, 200, 255' },  // Magenta
+            { main: '0, 255, 120',   accent: '200, 255, 220' },  // Green
+            { main: '255, 140, 0',   accent: '255, 230, 200' },  // Orange
+        ];
+
         tunnelRings.forEach((rz, idx) => {
             if (rz < zNear || rz > zFar) return;
             const scale = 150 / rz;
-            // More prominent alpha over the floor
-            const ringAlpha = Math.min(0.8, (zFar - rz) / (zFar * 0.3));
+            const ringAlpha = Math.min(0.95, 0.45 + (zFar - rz) / (zFar * 0.7));
+
+            const palette = ringColorPalette[idx % ringColorPalette.length];
+            const rColor  = palette.main;
+            const aColor  = palette.accent;
+
+            // Anchor points at road edges (using the actual floor boundaries)
+            const roadAnchorV = getV(0, 1, rz);
+            const roadY = roadAnchorV.y;
+
+            // Width setup to match the tunnel curvature exactly
+            const leftEdge  = getV(-tunnelR, 1, rz);
+            const rightEdge = getV(tunnelR,  1, rz);
+            const rxBase = (rightEdge.x - leftEdge.x) / 2;
+            const cx = (leftEdge.x + rightEdge.x) / 2;
+
+            // Height setup to match the ceiling exactly
+            const topV = getV(0, 1 - tunnelR * tallScale, rz);
+            const ryBase = roadY - topV.y;
             
-            const rColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
-            ctx.shadowColor = `rgb(${rColor})`;
-            
-            const drawPortalRing = (radius) => {
+            // Adjust center so the bottom of the "arch" sits on the road
+            const cy = roadY;
+
+            // CLIP: Ensure rings strictly merge into the road sides
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, canvas.width, roadY + 2);
+            ctx.clip();
+
+            // DRAW TRIPLE-RAIL NEON RIBS (Matches the concept art's engineered look)
+            const drawRib = (rx, ry, weight, blur, color, alpha) => {
+                ctx.shadowColor = `rgb(${color})`;
+                ctx.shadowBlur  = blur * scale;
+                ctx.lineWidth   = weight * scale;
+                ctx.strokeStyle = `rgba(${color}, ${alpha})`;
                 ctx.beginPath();
-                for(let i=0; i<=segments; i++) {
-                    const a = Math.PI + (i * Math.PI / segments);
-                    const p = { 
-                        x: Math.cos(a) * radius, 
-                        y: Math.sin(a) * radius * tallScale + 1 
-                    };
-                    const v = getV(p.x, p.y, rz);
-                    if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
-                }
+                ctx.ellipse(cx, cy, Math.max(1, rx), Math.max(1, ry), 0, Math.PI, Math.PI * 2); // Half-ellipse but tall
                 ctx.stroke();
             };
 
-            // DRAW MAIN THICK RING (Increased visual mass)
-            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
-            ctx.lineWidth = 12 * scale; // Thicker for better visibility
-            ctx.shadowBlur = 30 * scale; // More bloom
-            drawPortalRing(tunnelR);
+            // Atmospheric bloom for the whole ring area
+            drawRib(rxBase, ryBase, 30, 80, rColor, ringAlpha * 0.15);
 
-            // DRAW SECONDARY TRACES
-            ctx.lineWidth = 3 * scale;
-            ctx.shadowBlur = 10 * scale;
-            drawPortalRing(tunnelR + 0.12);
-            drawPortalRing(tunnelR - 0.12);
+            // 1. OUTER RAIL
+            drawRib(rxBase + 8 * scale, ryBase + 8 * scale, 3.5, 15, rColor, ringAlpha * 0.8);
             
+            // 2. MAIN MIDDLE RAIL (Thickest, most glow)
+            drawRib(rxBase, ryBase, 8, 30, rColor, ringAlpha);
+            drawRib(rxBase, ryBase, 2, 10, aColor, ringAlpha); // Bright center core
+
+            // 3. INNER RAIL
+            drawRib(rxBase - 8 * scale, ryBase - 8 * scale, 3.5, 15, rColor, ringAlpha * 0.8);
+
+            ctx.restore();
             ctx.shadowBlur = 0;
         });
 

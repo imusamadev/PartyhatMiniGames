@@ -974,11 +974,18 @@
     }
 
     function drawTunnel() {
-        // Base color is vibrant cyan (from concept), encryption is even brighter/whiter
         const color = encryptionTime > 0 ? '180, 255, 255' : '0, 242, 255';
         const trackY = canvas.height * HORIZON_Y;
         const trackH = canvas.height * (1 - HORIZON_Y);
         
+        // PERFORMANCE FIX: Pre-calculate Gradients once per frame (not in segments loop)
+        const wallVGrad = ctx.createLinearGradient(0, trackY - 100, 0, trackY + 100);
+        wallVGrad.addColorStop(0, '#010105'); wallVGrad.addColorStop(1, '#05051a');
+        const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
+        floorGrad.addColorStop(0, '#010108'); floorGrad.addColorStop(0.5, '#05052a'); floorGrad.addColorStop(1, '#020210');
+        const bloomGrad = ctx.createRadialGradient(canvas.width/2, canvas.height * 0.7, 0, canvas.width/2, canvas.height * 0.7, canvas.width * 0.6);
+        bloomGrad.addColorStop(0, `rgba(${color}, 0.25)`); bloomGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
         // Perspective tool
         const getV = (laneX, heightY, z) => {
             const scale = 150 / z;
@@ -1001,10 +1008,7 @@
             const angle1 = Math.PI + (i * Math.PI / segments);
             const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
             
-            // Wall Panel Colors (Dark Obsidian with vertical depth)
-            const vGrad = ctx.createLinearGradient(0, trackY - 100, 0, trackY + 100);
-            vGrad.addColorStop(0, '#010105'); vGrad.addColorStop(1, '#05051a');
-            ctx.fillStyle = vGrad;
+            ctx.fillStyle = wallVGrad;
             
             const v1 = getV(Math.cos(angle1) * tunnelR, Math.sin(angle1) * tunnelR * tallScale + 1, zNear);
             const v2 = getV(Math.cos(angle2) * tunnelR, Math.sin(angle2) * tunnelR * tallScale + 1, zNear);
@@ -1016,8 +1020,7 @@
             ctx.lineTo(v3.x, v3.y); ctx.lineTo(v4.x, v4.y);
             ctx.closePath(); ctx.fill();
 
-
-            // Dark Vertical Dividers (Ribbed look)
+            // Dark Vertical Dividers
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke();
@@ -1027,31 +1030,25 @@
         const drawAnchor = (side) => {
             const pNear = getV(side * tunnelR, 1, zNear);
             const pFar = getV(side * tunnelR, 1, zFar);
-            ctx.strokeStyle = `rgba(${color}, 0.5)`;
-            ctx.lineWidth = 3;
-            ctx.shadowColor = `rgb(${color})`;
-            ctx.shadowBlur = 15;
+            // PERFORMANCE FIX: Replace shadowBlur with alpha-stroke
+            ctx.strokeStyle = `rgba(${color}, 0.2)`;
+            ctx.lineWidth = 8;
             ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
-            ctx.shadowBlur = 0;
+            
+            ctx.strokeStyle = `rgba(${color}, 0.6)`;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
         };
         drawAnchor(-1); drawAnchor(1);
 
 
         // Obsidian Floor (Track) - Deeper Navy/Blue Metallic Base
-        const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
-        floorGrad.addColorStop(0, '#010108'); 
-        floorGrad.addColorStop(0.5, '#05052a'); // More blue in the mid-tones
-        floorGrad.addColorStop(1, '#020210');
         ctx.fillStyle = floorGrad;
         const f1 = getV(-2.5, 1, zNear); const f2 = getV(2.5, 1, zNear);
         const f3 = getV(2.5, 1, zFar);  const f4 = getV(-2.5, 1, zFar);
         ctx.beginPath(); ctx.moveTo(f1.x, f1.y); ctx.lineTo(f2.x, f2.y);
         ctx.lineTo(f3.x, f3.y); ctx.lineTo(f4.x, f4.y); ctx.closePath(); ctx.fill();
 
-        // Subtle Floor Reflection / Center Bloom (Increased intensity)
-        const bloomGrad = ctx.createRadialGradient(canvas.width/2, canvas.height * 0.7, 0, canvas.width/2, canvas.height * 0.7, canvas.width * 0.6);
-        bloomGrad.addColorStop(0, `rgba(${color}, 0.25)`);
-        bloomGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = bloomGrad;
         ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
 
@@ -1106,11 +1103,10 @@
             ctx.beginPath(); ctx.moveTo(mid1.x, mid1.y); ctx.lineTo(mid2.x, mid2.y); ctx.stroke();
         };
 
-        // Optimized Panel Count: Only draw near-mid field panels
+        // Optimized Panel Count: Only draw near-field panels
         tunnelRings.forEach((rz, idx) => {
-            if (rz < zNear || rz > zFar - 500) return;
+            if (rz < zNear || rz > zFar - 650) return;
             const pColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
-            
             drawPanel(rz + 50, -1, 0.2, 0.1, 120, pColor);
             drawPanel(rz + 100, 1, 0.15, 0.1, 150, pColor);
         });

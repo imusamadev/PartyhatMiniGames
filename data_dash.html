@@ -340,6 +340,10 @@
     let encryptionTime = 0;
     let survivedTime = 0;
     let jitter = 0; // Visual glitch factor
+    let tunnelRings = []; // Structural neon portals
+    const RING_SPACING = 350; // Distance between rings
+    for(let z = 0; z < 1800; z += RING_SPACING) tunnelRings.push(z);
+    
     const ENCRYPTION_DURATION = 5000;
 
     // Audio Context
@@ -551,27 +555,34 @@
                     ctx.fill();
 
                 } else if (this.type === 'SNOOP') {
-                    // --- VOLUMETRIC SPHERE ORB (Purple) ---
-                    const grad = ctx.createRadialGradient(-w/6, -w/6, 2 * scale, 0, 0, w/2);
-                    grad.addColorStop(0, '#fff'); // Specular highlight
-                    grad.addColorStop(0.2, '#cc00ff'); // Main color
-                    grad.addColorStop(1, '#330066'); // Dark core
+                    // --- HEXAGONAL THREAT FRAME (Red) ---
+                    const sides = 6;
+                    const r = w / 2;
+                    ctx.strokeStyle = '#ff0055';
+                    ctx.shadowColor = '#ff0055';
+                    ctx.shadowBlur = 15 * scale;
+                    ctx.lineWidth = 4 * scale;
                     
-                    ctx.fillStyle = grad;
+                    // Outer Hex Frame
                     ctx.beginPath();
-                    ctx.arc(0, 0, w/2, 0, Math.PI*2);
-                    ctx.fill();
-                    
-                    // Rim light / Glow ring
-                    ctx.strokeStyle = 'rgba(204, 0, 255, 0.8)';
-                    ctx.lineWidth = 2 * scale;
+                    for(let i=0; i<=sides; i++) {
+                        const a = i * Math.PI * 2 / sides;
+                        ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
+                    }
                     ctx.stroke();
-
-                    // Digital Pupil
+                    
+                    // Inner "Fragmented" Detail
                     ctx.beginPath();
-                    ctx.arc(0, 0, w/5, 0, Math.PI*2);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.fill();
+                    ctx.lineWidth = 2 * scale;
+                    for(let i=0; i<sides; i++) {
+                        if (i % 2 === 0) { // Only draw half the segments for fragmentation
+                            const a1 = i * Math.PI * 2 / sides;
+                            const a2 = (i + 1) * Math.PI * 2 / sides;
+                            ctx.moveTo(r * 0.7 * Math.cos(a1), r * 0.7 * Math.sin(a1));
+                            ctx.lineTo(r * 0.7 * Math.cos(a2), r * 0.7 * Math.sin(a2));
+                        }
+                    }
+                    ctx.stroke();
                 }
             }
             ctx.restore();
@@ -795,6 +806,14 @@
             return h.z > 20;
         });
 
+        // Update Tunnel Rings (Receding Portals)
+        tunnelRings = tunnelRings.map(z => {
+            let nextZ = z - actualSpeed * dt * 0.15;
+            if (nextZ < 0) nextZ += (tunnelRings.length * RING_SPACING);
+            return nextZ;
+        });
+        tunnelRings.sort((a, b) => b - a); // Draw further rings first
+
         particles = particles.filter(p => p.update());
     }
 
@@ -835,33 +854,79 @@
 
         // 1. PHYSICAL WALL PLATING (Matte Metallic Panels) - Increased Smoothness
         const segments = 24; 
+        const tunnelR = 2.5; 
         for(let i=0; i<segments; i++) {
             const angle1 = Math.PI + (i * Math.PI / segments);
             const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
             
-            const l1 = Math.cos(angle1) * 2; const h1 = Math.sin(angle1) * 2 + 1;
-            const l2 = Math.cos(angle2) * 2; const h2 = Math.sin(angle2) * 2 + 1;
+            const l1 = Math.cos(angle1) * tunnelR; const h1 = Math.sin(angle1) * tunnelR + (tunnelR-1);
+            const l2 = Math.cos(angle2) * tunnelR; const h2 = Math.sin(angle2) * tunnelR + (tunnelR-1);
             
             const v1 = getV(l1, h1, zNear); const v2 = getV(l2, h2, zNear);
             const v3 = getV(l2, h2, zFar);  const v4 = getV(l1, h1, zFar);
             
             // Matte metallic plating look
-            const wallGrad = ctx.createLinearGradient(v1.x, v1.y, v2.x, v2.y);
-            wallGrad.addColorStop(0, '#050510');
-            wallGrad.addColorStop(0.5, '#0a0a1a');
-            wallGrad.addColorStop(1, '#050510');
-            
-            ctx.fillStyle = wallGrad;
+            ctx.fillStyle = i % 2 === 0 ? '#050510' : '#08081a';
             ctx.beginPath();
             ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
             ctx.lineTo(v3.x, v3.y); ctx.lineTo(v4.x, v4.y);
             ctx.closePath(); ctx.fill();
 
-            // Subtle grid panel lines
-            ctx.strokeStyle = `rgba(${color}, 0.08)`;
+            // Subtle panel lines
+            ctx.strokeStyle = `rgba(${color}, 0.05)`;
             ctx.lineWidth = 1;
             ctx.stroke();
         }
+
+        // 1.5 STRUCTURAL TUNNEL RINGS (Receding Portals from Concept)
+        tunnelRings.forEach((rz, idx) => {
+            if (rz < zNear || rz > zFar) return;
+            const scale = 150 / rz;
+            const ringAlpha = Math.min(0.65, (zFar - rz) / (zFar * 0.4));
+            
+            // DUAL-COLOR ALTERNATION (Cyan & Magenta as seen in concept)
+            // Use the ring's index to alternate colors
+            const rColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
+            ctx.shadowColor = `rgb(${rColor})`;
+            
+            // DRAW MAIN THICK RING (High-mass structural loop)
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
+            ctx.lineWidth = 10 * scale; // Even thicker for visual mass
+            ctx.shadowBlur = 25 * scale; // Intense neon saturation
+            ctx.beginPath();
+            for(let i=0; i<=segments; i++) {
+                const a = Math.PI + (i * Math.PI / segments);
+                const p = { x: Math.cos(a) * tunnelR, y: Math.sin(a) * tunnelR + (tunnelR-1) };
+                const v = getV(p.x, p.y, rz);
+                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
+            }
+            ctx.stroke();
+
+            // DRAW SECONDARY OUTER TRACE (Structural detail)
+            ctx.lineWidth = 2 * scale;
+            ctx.shadowBlur = 10 * scale;
+            ctx.beginPath();
+            for(let i=0; i<=segments; i++) {
+                const a = Math.PI + (i * Math.PI / segments);
+                const p = { x: Math.cos(a) * (tunnelR + 0.1), y: Math.sin(a) * (tunnelR + 0.1) + (tunnelR-1) };
+                const v = getV(p.x, p.y, rz);
+                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
+            }
+            ctx.stroke();
+            
+            // DRAW SECONDARY INNER TRACE (Additional thickness/volume)
+            ctx.lineWidth = 2 * scale;
+            ctx.beginPath();
+            for(let i=0; i<=segments; i++) {
+                const a = Math.PI + (i * Math.PI / segments);
+                const p = { x: Math.cos(a) * (tunnelR - 0.1), y: Math.sin(a) * (tunnelR - 0.1) + (tunnelR-1) };
+                const v = getV(p.x, p.y, rz);
+                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
+            }
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        });
 
         // Obsidian Floor (Track) - Deeper Navy/Blue Metallic Base
         const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
@@ -929,13 +994,15 @@
         drawEnhancedLane(-1.6, 6, 0.3); // Broad left glow
         drawEnhancedLane(1.6, 6, 0.3);  // Broad right glow
 
-        // Far Horizon Glow (Vignette focus point)
+        // Far Horizon Glow (Subtle atmosphere focus, not a sphere)
         const hGrad = ctx.createRadialGradient(canvas.width/2, trackY, 0, canvas.width/2, trackY, 200);
-        hGrad.addColorStop(0, `rgba(${color}, 0.3)`);
+        hGrad.addColorStop(0, `rgba(${color}, 0.1)`);
+        hGrad.addColorStop(0.5, `rgba(${color}, 0.05)`);
         hGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = hGrad;
         ctx.beginPath();
-        ctx.ellipse(canvas.width/2, trackY, 200, 50, 0, 0, Math.PI*2);
+        // Wider, flatter ellipse to create a horizontal horizon-line glow effect
+        ctx.ellipse(canvas.width/2, trackY, 300, 35, 0, 0, Math.PI*2);
         ctx.fill();
 
         roadMarkers.forEach(m => {

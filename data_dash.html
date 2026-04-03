@@ -903,6 +903,81 @@
         ctx.fillStyle = bloomGrad;
         ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
 
+        // 1.3 SIDE WALL LINES (4 Thick, Multi-Colored 'Data Ribbon' lines)
+        const wallColors = ['0, 242, 255', '255, 0, 234', '0, 255, 120', '255, 140, 0'];
+        const drawWallLines = (side) => {
+            for(let i=0; i<4; i++) {
+                // Tighter spacing: lines are very close to each other near the lower side wall
+                const hFactor = 0.1 + i * 0.04; 
+                const angle = 1.5 * Math.PI + side * (1 - hFactor) * 0.48 * Math.PI;
+                
+                const pNear = getV(Math.cos(angle) * tunnelR, Math.sin(angle) * tunnelR * tallScale + 1, zNear);
+                const pFar  = getV(Math.cos(angle) * tunnelR, Math.sin(angle) * tunnelR * tallScale + 1, zFar);
+                
+                const lColor = wallColors[i % wallColors.length];
+                
+                // Thick Atmospheric Glow
+                ctx.strokeStyle = `rgba(${lColor}, 0.3)`;
+                ctx.lineWidth = 8;
+                ctx.shadowColor = `rgb(${lColor})`;
+                ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
+                
+                // Solid Core line
+                ctx.strokeStyle = `rgb(${lColor})`;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 0;
+                ctx.stroke();
+            }
+        };
+        drawWallLines(-1); drawWallLines(1);
+
+        // 1.4 DATA PANELS / WALL MODULES (Segmented glowing units on walls)
+        const drawPanel = (z, side, angleFactor, pWidth, pLength, color) => {
+            const angleStart = 1.5 * Math.PI + side * angleFactor * Math.PI;
+            const angleEnd   = angleStart + side * 0.15 * Math.PI; // width of panel along arc
+            
+            // 4 points of the panel on the wall surface
+            const p1 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z);
+            const p2 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z);
+            const p3 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z + pLength);
+            const p4 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z + pLength);
+            
+            const pAlpha = Math.min(0.6, (zFar - z) / zFar);
+            ctx.fillStyle = `rgba(${color}, ${pAlpha * 0.1})`;
+            ctx.strokeStyle = `rgba(${color}, ${pAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = `rgb(${color})`;
+            ctx.shadowBlur = 10;
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            
+            // Internal 'Data Lines'
+            ctx.lineWidth = 1;
+            ctx.shadowBlur = 0;
+            const mid1 = { x: (p1.x + p4.x)/2, y: (p1.y + p4.y)/2 };
+            const mid2 = { x: (p2.x + p3.x)/2, y: (p2.y + p3.y)/2 };
+            ctx.beginPath(); ctx.moveTo(mid1.x, mid1.y); ctx.lineTo(mid2.x, mid2.y); ctx.stroke();
+        };
+
+        // Draw panels at ring intervals or shifted
+        tunnelRings.forEach((rz, idx) => {
+            if (rz < zNear || rz > zFar - 200) return;
+            const pColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
+            
+            // Left Panels
+            drawPanel(rz + 50, -1, 0.2, 0.1, 120, pColor);
+            drawPanel(rz + 180, -1, 0.4, 0.1, 80, idx % 3 === 0 ? '0, 255, 120' : '255, 140, 0');
+            
+            // Right Panels
+            drawPanel(rz + 100, 1, 0.15, 0.1, 150, pColor);
+            drawPanel(rz + 220, 1, 0.35, 0.1, 60, idx % 4 === 0 ? '255, 230, 0' : '255, 0, 234');
+        });
+
         // 1.5 STRUCTURAL TUNNEL RINGS (High-Fidelity 'Ribbed' Portals - Matches Concept Art)
         // 4 vibrant neon colors with highly saturated accents
         const ringColorPalette = [

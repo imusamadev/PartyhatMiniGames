@@ -907,7 +907,6 @@
         const wallColors = ['0, 242, 255', '255, 0, 234', '0, 255, 120', '255, 140, 0'];
         const drawWallLines = (side) => {
             for(let i=0; i<4; i++) {
-                // Tighter spacing: lines are very close to each other near the lower side wall
                 const hFactor = 0.1 + i * 0.04; 
                 const angle = 1.5 * Math.PI + side * (1 - hFactor) * 0.48 * Math.PI;
                 
@@ -916,17 +915,13 @@
                 
                 const lColor = wallColors[i % wallColors.length];
                 
-                // Thick Atmospheric Glow
-                ctx.strokeStyle = `rgba(${lColor}, 0.3)`;
-                ctx.lineWidth = 8;
-                ctx.shadowColor = `rgb(${lColor})`;
-                ctx.shadowBlur = 15;
+                // PERFORMANCE FIX: Replace shadowBlur with 2-layer stroke
+                ctx.strokeStyle = `rgba(${lColor}, 0.2)`;
+                ctx.lineWidth = 12;
                 ctx.beginPath(); ctx.moveTo(pNear.x, pNear.y); ctx.lineTo(pFar.x, pFar.y); ctx.stroke();
                 
-                // Solid Core line
                 ctx.strokeStyle = `rgb(${lColor})`;
-                ctx.lineWidth = 3;
-                ctx.shadowBlur = 0;
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
             }
         };
@@ -935,20 +930,17 @@
         // 1.4 DATA PANELS / WALL MODULES (Segmented glowing units on walls)
         const drawPanel = (z, side, angleFactor, pWidth, pLength, color) => {
             const angleStart = 1.5 * Math.PI + side * angleFactor * Math.PI;
-            const angleEnd   = angleStart + side * 0.15 * Math.PI; // width of panel along arc
+            const angleEnd   = angleStart + side * 0.15 * Math.PI;
             
-            // 4 points of the panel on the wall surface
             const p1 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z);
             const p2 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z);
             const p3 = getV(Math.cos(angleEnd)   * (tunnelR + 0.05), Math.sin(angleEnd)   * (tunnelR + 0.05) * tallScale + 1, z + pLength);
             const p4 = getV(Math.cos(angleStart) * (tunnelR + 0.05), Math.sin(angleStart) * (tunnelR + 0.05) * tallScale + 1, z + pLength);
             
             const pAlpha = Math.min(0.6, (zFar - z) / zFar);
-            ctx.fillStyle = `rgba(${color}, ${pAlpha * 0.1})`;
-            ctx.strokeStyle = `rgba(${color}, ${pAlpha})`;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = `rgb(${color})`;
-            ctx.shadowBlur = 10;
+            ctx.fillStyle = `rgba(${color}, ${pAlpha * 0.15})`;
+            ctx.strokeStyle = `rgba(${color}, ${pAlpha * 0.8})`;
+            ctx.lineWidth = 1.5;
             
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
@@ -956,26 +948,19 @@
             ctx.closePath();
             ctx.fill(); ctx.stroke();
             
-            // Internal 'Data Lines'
-            ctx.lineWidth = 1;
-            ctx.shadowBlur = 0;
+            // Subtle Internal Data Line
             const mid1 = { x: (p1.x + p4.x)/2, y: (p1.y + p4.y)/2 };
             const mid2 = { x: (p2.x + p3.x)/2, y: (p2.y + p3.y)/2 };
             ctx.beginPath(); ctx.moveTo(mid1.x, mid1.y); ctx.lineTo(mid2.x, mid2.y); ctx.stroke();
         };
 
-        // Draw panels at ring intervals or shifted
+        // Optimized Panel Count: Only draw near-mid field panels
         tunnelRings.forEach((rz, idx) => {
-            if (rz < zNear || rz > zFar - 200) return;
+            if (rz < zNear || rz > zFar - 500) return;
             const pColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
             
-            // Left Panels
             drawPanel(rz + 50, -1, 0.2, 0.1, 120, pColor);
-            drawPanel(rz + 180, -1, 0.4, 0.1, 80, idx % 3 === 0 ? '0, 255, 120' : '255, 140, 0');
-            
-            // Right Panels
             drawPanel(rz + 100, 1, 0.15, 0.1, 150, pColor);
-            drawPanel(rz + 220, 1, 0.35, 0.1, 60, idx % 4 === 0 ? '255, 230, 0' : '255, 0, 234');
         });
 
         // 1.5 STRUCTURAL TUNNEL RINGS (High-Fidelity 'Ribbed' Portals - Matches Concept Art)
@@ -989,38 +974,28 @@
 
         // 1.5.1 CEILING LIGHT TUBES (Discrete bars between rings)
         const drawCeilingTube = (z1, z2) => {
-            const tubeGap = 40; // Gaps near rings
-            const startZ = z1 + tubeGap;
-            const endZ   = z2 - tubeGap;
+            const startZ = z1 + 40;
+            const endZ   = z2 - 40;
             if (startZ >= endZ) return;
-
-            const tWidth = 0.12; 
-            const tAngle = 1.5 * Math.PI; // Dead center top
-            
-            const p1 = getV(Math.cos(tAngle - tWidth) * tunnelR, Math.sin(tAngle - tWidth) * tunnelR * tallScale + 1, startZ);
-            const p2 = getV(Math.cos(tAngle + tWidth) * tunnelR, Math.sin(tAngle + tWidth) * tunnelR * tallScale + 1, startZ);
-            const p3 = getV(Math.cos(tAngle + tWidth) * tunnelR, Math.sin(tAngle + tWidth) * tunnelR * tallScale + 1, endZ);
-            const p4 = getV(Math.cos(tAngle - tWidth) * tunnelR, Math.sin(tAngle - tWidth) * tunnelR * tallScale + 1, endZ);
+            const tAngle = 1.5 * Math.PI;
+            const p1 = getV(Math.cos(tAngle - 0.12) * tunnelR, Math.sin(tAngle - 0.12) * tunnelR * tallScale + 1, startZ);
+            const p2 = getV(Math.cos(tAngle + 0.12) * tunnelR, Math.sin(tAngle + 0.12) * tunnelR * tallScale + 1, startZ);
+            const p3 = getV(Math.cos(tAngle + 0.12) * tunnelR, Math.sin(tAngle + 0.12) * tunnelR * tallScale + 1, endZ);
+            const p4 = getV(Math.cos(tAngle - 0.12) * tunnelR, Math.sin(tAngle - 0.12) * tunnelR * tallScale + 1, endZ);
 
             const tAlpha = Math.min(0.8, (zFar - startZ) / zFar);
-            ctx.shadowColor = `rgb(0, 242, 255)`;
-            ctx.shadowBlur = 25 * (150 / startZ);
-            ctx.fillStyle = `rgba(0, 242, 255, ${tAlpha * 0.4})`;
-            
+            // Replace shadowBlur with 2-layer fill
+            ctx.fillStyle = `rgba(0, 242, 255, ${tAlpha * 0.1})`;
             ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-            ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
             ctx.closePath();
             ctx.fill();
 
-            // Hot White Core (Makes it look like a tube light)
             ctx.strokeStyle = `rgba(255, 255, 255, ${tAlpha})`;
-            ctx.lineWidth = 2 * (150 / startZ);
-            ctx.shadowBlur = 10 * (150 / startZ);
+            ctx.lineWidth = 1.5 * (150 / startZ);
             ctx.stroke();
         };
 
-        // Draw tubes between the receding rings
         const sortedRings = [...tunnelRings].sort((a, b) => a - b);
         for(let i=0; i<sortedRings.length - 1; i++) {
             if (sortedRings[i] < zNear || sortedRings[i+1] > zFar) continue;
@@ -1031,60 +1006,37 @@
             if (rz < zNear || rz > zFar) return;
             const scale = 150 / rz;
             const ringAlpha = Math.min(0.95, 0.45 + (zFar - rz) / (zFar * 0.7));
-
             const palette = ringColorPalette[idx % ringColorPalette.length];
             const rColor  = palette.main;
             const aColor  = palette.accent;
 
-            // Anchor points at road edges (using the actual floor boundaries)
-            const roadAnchorV = getV(0, 1, rz);
-            const roadY = roadAnchorV.y;
-
-            // Width setup to match the tunnel curvature exactly
-            const leftEdge  = getV(-tunnelR, 1, rz);
-            const rightEdge = getV(tunnelR,  1, rz);
-            const rxBase = (rightEdge.x - leftEdge.x) / 2;
-            const cx = (leftEdge.x + rightEdge.x) / 2;
-
-            // Height setup to match the ceiling exactly
-            const topV = getV(0, 1 - tunnelR * tallScale, rz);
-            const ryBase = roadY - topV.y;
+            const roadY = getV(0, 1, rz).y;
+            const rxBase = (getV(tunnelR, 1, rz).x - getV(-tunnelR, 1, rz).x) / 2;
+            const cx = getV(0, 1, rz).x;
+            const ryBase = roadY - getV(0, 1 - tunnelR * tallScale, rz).y;
             
-            // Adjust center so the bottom of the "arch" sits on the road
-            const cy = roadY;
-
-            // CLIP: Ensure rings strictly merge into the road sides
             ctx.save();
             ctx.beginPath();
             ctx.rect(0, 0, canvas.width, roadY + 2);
             ctx.clip();
 
-            // DRAW TRIPLE-RAIL NEON RIBS (Matches the concept art's engineered look)
-            const drawRib = (rx, ry, weight, blur, color, alpha) => {
-                ctx.shadowColor = `rgb(${color})`;
-                ctx.shadowBlur  = blur * scale;
-                ctx.lineWidth   = weight * scale;
-                ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-                ctx.beginPath();
-                ctx.ellipse(cx, cy, Math.max(1, rx), Math.max(1, ry), 0, Math.PI, Math.PI * 2); // Half-ellipse but tall
-                ctx.stroke();
-            };
+            // PERFORMANCE FIX: Replace shadowBlur with multi-stroke layering
+            // Layer 1: Broad Atmos Glow
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha * 0.15})`;
+            ctx.lineWidth = 35 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase, ryBase, 0, Math.PI, Math.PI * 2); ctx.stroke();
 
-            // Atmospheric bloom for the whole ring area
-            drawRib(rxBase, ryBase, 30, 80, rColor, ringAlpha * 0.15);
+            // Layer 2: Ribbon Rails (Middle thick rail)
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
+            ctx.lineWidth = 10 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase, ryBase, 0, Math.PI, Math.PI * 2); ctx.stroke();
 
-            // 1. OUTER RAIL
-            drawRib(rxBase + 8 * scale, ryBase + 8 * scale, 3.5, 15, rColor, ringAlpha * 0.8);
+            // Layer 3: Inner rail highlight
+            ctx.strokeStyle = `rgba(${aColor}, ${ringAlpha})`;
+            ctx.lineWidth = 3 * scale;
+            ctx.beginPath(); ctx.ellipse(cx, roadY, rxBase - 8*scale, ryBase - 8*scale, 0, Math.PI, Math.PI * 2); ctx.stroke();
             
-            // 2. MAIN MIDDLE RAIL (Thickest, most glow)
-            drawRib(rxBase, ryBase, 8, 30, rColor, ringAlpha);
-            drawRib(rxBase, ryBase, 2, 10, aColor, ringAlpha); // Bright center core
-
-            // 3. INNER RAIL
-            drawRib(rxBase - 8 * scale, ryBase - 8 * scale, 3.5, 15, rColor, ringAlpha * 0.8);
-
             ctx.restore();
-            ctx.shadowBlur = 0;
         });
 
         // Obsidian Floor (Track)

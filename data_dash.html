@@ -852,15 +852,19 @@
         const zNear = 20;
         const zFar = 1500;
 
-        // 1. PHYSICAL WALL PLATING (Matte Metallic Panels) - Increased Smoothness
+        // 1. PHYSICAL WALL PLATING (REFINED ROUND GEOMETRY)
         const segments = 24; 
-        const tunnelR = 2.5; 
+        const tunnelR = 1.8; 
+        const aspectScale = (canvas.width * 0.25) / trackH; 
+        const tallScale = aspectScale * 2.2; // Specifically increase height for cinematic feel
+        
         for(let i=0; i<segments; i++) {
             const angle1 = Math.PI + (i * Math.PI / segments);
             const angle2 = Math.PI + ((i + 1) * Math.PI / segments);
             
-            const l1 = Math.cos(angle1) * tunnelR; const h1 = Math.sin(angle1) * tunnelR + (tunnelR-1);
-            const l2 = Math.cos(angle2) * tunnelR; const h2 = Math.sin(angle2) * tunnelR + (tunnelR-1);
+            // Physical coordinates (using tallScale for increased height)
+            const l1 = Math.cos(angle1) * tunnelR; const h1 = Math.sin(angle1) * tunnelR * tallScale + 1;
+            const l2 = Math.cos(angle2) * tunnelR; const h2 = Math.sin(angle2) * tunnelR * tallScale + 1;
             
             const v1 = getV(l1, h1, zNear); const v2 = getV(l2, h2, zNear);
             const v3 = getV(l2, h2, zFar);  const v4 = getV(l1, h1, zFar);
@@ -878,55 +882,6 @@
             ctx.stroke();
         }
 
-        // 1.5 STRUCTURAL TUNNEL RINGS (Receding Portals from Concept)
-        tunnelRings.forEach((rz, idx) => {
-            if (rz < zNear || rz > zFar) return;
-            const scale = 150 / rz;
-            const ringAlpha = Math.min(0.65, (zFar - rz) / (zFar * 0.4));
-            
-            // DUAL-COLOR ALTERNATION (Cyan & Magenta as seen in concept)
-            // Use the ring's index to alternate colors
-            const rColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
-            ctx.shadowColor = `rgb(${rColor})`;
-            
-            // DRAW MAIN THICK RING (High-mass structural loop)
-            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
-            ctx.lineWidth = 10 * scale; // Even thicker for visual mass
-            ctx.shadowBlur = 25 * scale; // Intense neon saturation
-            ctx.beginPath();
-            for(let i=0; i<=segments; i++) {
-                const a = Math.PI + (i * Math.PI / segments);
-                const p = { x: Math.cos(a) * tunnelR, y: Math.sin(a) * tunnelR + (tunnelR-1) };
-                const v = getV(p.x, p.y, rz);
-                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
-            }
-            ctx.stroke();
-
-            // DRAW SECONDARY OUTER TRACE (Structural detail)
-            ctx.lineWidth = 2 * scale;
-            ctx.shadowBlur = 10 * scale;
-            ctx.beginPath();
-            for(let i=0; i<=segments; i++) {
-                const a = Math.PI + (i * Math.PI / segments);
-                const p = { x: Math.cos(a) * (tunnelR + 0.1), y: Math.sin(a) * (tunnelR + 0.1) + (tunnelR-1) };
-                const v = getV(p.x, p.y, rz);
-                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
-            }
-            ctx.stroke();
-            
-            // DRAW SECONDARY INNER TRACE (Additional thickness/volume)
-            ctx.lineWidth = 2 * scale;
-            ctx.beginPath();
-            for(let i=0; i<=segments; i++) {
-                const a = Math.PI + (i * Math.PI / segments);
-                const p = { x: Math.cos(a) * (tunnelR - 0.1), y: Math.sin(a) * (tunnelR - 0.1) + (tunnelR-1) };
-                const v = getV(p.x, p.y, rz);
-                if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
-            }
-            ctx.stroke();
-            
-            ctx.shadowBlur = 0;
-        });
 
         // Obsidian Floor (Track) - Deeper Navy/Blue Metallic Base
         const floorGrad = ctx.createLinearGradient(0, trackY, 0, canvas.height);
@@ -945,6 +900,45 @@
         bloomGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = bloomGrad;
         ctx.fillRect(0, trackY, canvas.width, canvas.height - trackY);
+
+        // 1.5 STRUCTURAL TUNNEL RINGS (Receding Portals - Round & Prominent)
+        tunnelRings.forEach((rz, idx) => {
+            if (rz < zNear || rz > zFar) return;
+            const scale = 150 / rz;
+            // More prominent alpha over the floor
+            const ringAlpha = Math.min(0.8, (zFar - rz) / (zFar * 0.3));
+            
+            const rColor = idx % 2 === 0 ? '0, 242, 255' : '255, 0, 234';
+            ctx.shadowColor = `rgb(${rColor})`;
+            
+            const drawPortalRing = (radius) => {
+                ctx.beginPath();
+                for(let i=0; i<=segments; i++) {
+                    const a = Math.PI + (i * Math.PI / segments);
+                    const p = { 
+                        x: Math.cos(a) * radius, 
+                        y: Math.sin(a) * radius * tallScale + 1 
+                    };
+                    const v = getV(p.x, p.y, rz);
+                    if (i === 0) ctx.moveTo(v.x, v.y); else ctx.lineTo(v.x, v.y);
+                }
+                ctx.stroke();
+            };
+
+            // DRAW MAIN THICK RING (Increased visual mass)
+            ctx.strokeStyle = `rgba(${rColor}, ${ringAlpha})`;
+            ctx.lineWidth = 12 * scale; // Thicker for better visibility
+            ctx.shadowBlur = 30 * scale; // More bloom
+            drawPortalRing(tunnelR);
+
+            // DRAW SECONDARY TRACES
+            ctx.lineWidth = 3 * scale;
+            ctx.shadowBlur = 10 * scale;
+            drawPortalRing(tunnelR + 0.12);
+            drawPortalRing(tunnelR - 0.12);
+            
+            ctx.shadowBlur = 0;
+        });
 
         // 2. EMBEDDED HOLOGRAPHS
         holograms.forEach(h => {

@@ -930,191 +930,212 @@
 
         ctx.save();
         ctx.translate(x, y + hover - 40); // Lift up slightly
-        ctx.rotate(tilt);
+        // Remove rotation tilt as per user request for smoother glide
+        // ctx.rotate(tilt); 
 
         // Scale up to better match the prominent size in concept
         ctx.scale(1.2, 1.2);
 
-        // --- HOVERBOARD ---
+        // --- HOVERBOARD (Sleek Tapered Figure-8 Shape) ---
         // Board shadow
         ctx.fillStyle = 'rgba(0, 242, 255, 0.15)';
         ctx.beginPath();
-        ctx.ellipse(0, 60, 45, 12, 0, 0, Math.PI*2);
+        ctx.ellipse(0, 60, 50, 12, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Main board body (sleek tech plate)
-        ctx.fillStyle = '#0a0a1a';
+        // Main board body (tapered rounded rectangle)
+        const bw = 45; // Board width half
+        const bh = 5;  // Board height half
         ctx.beginPath();
-        ctx.moveTo(-35, 55);
-        ctx.lineTo(35, 55);
-        ctx.quadraticCurveTo(45, 55, 45, 60);
-        ctx.quadraticCurveTo(45, 65, 35, 65);
-        ctx.lineTo(-35, 65);
-        ctx.quadraticCurveTo(-45, 65, -45, 60);
-        ctx.quadraticCurveTo(-45, 55, -35, 55);
+        ctx.moveTo(-bw, 55);
+        ctx.bezierCurveTo(-bw-5, 55, -bw-5, 65, -bw, 65); // Left rounded cap
+        ctx.bezierCurveTo(-15, 68, 15, 68, bw, 65);     // Bottom edge with subtle taper
+        ctx.bezierCurveTo(bw+5, 65, bw+5, 55, bw, 55);  // Right rounded cap
+        ctx.bezierCurveTo(15, 52, -15, 52, -bw, 55);    // Top edge with subtle taper
+        ctx.closePath();
+        
+        // Solid dark base
+        ctx.fillStyle = '#050510';
+        ctx.fill();
+
+        // Inner Purple/Blue Glow Core
+        let boardGrad = ctx.createRadialGradient(0, 60, 0, 0, 60, 45);
+        boardGrad.addColorStop(0, 'rgba(100, 0, 255, 0.4)');
+        boardGrad.addColorStop(0.6, 'rgba(50, 0, 150, 0.1)');
+        boardGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = boardGrad;
         ctx.fill();
 
         // Outer cyan edge glow
         ctx.strokeStyle = '#00f2ff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Thruster exhaust underneath board
-        const trailLen = Math.sin(t*0.02)*10 + 25;
-        const lltGrad = ctx.createLinearGradient(-20, 65, -20, 65 + trailLen);
-        lltGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
-        lltGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
-        ctx.fillStyle = lltGrad;
-        ctx.beginPath(); ctx.ellipse(-20, 65, 6, trailLen, 0, 0, Math.PI*2); ctx.fill();
-
-        const rrtGrad = ctx.createLinearGradient(20, 65, 20, 65 + trailLen);
-        rrtGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
-        rrtGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
-        ctx.fillStyle = rrtGrad;
-        ctx.beginPath(); ctx.ellipse(20, 65, 6, trailLen, 0, 0, Math.PI*2); ctx.fill();
-
-        // Front glowing bumper segment
-        ctx.fillStyle = '#00f2ff';
+        ctx.lineWidth = 2.5;
         ctx.shadowColor = '#00f2ff';
         ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Thruster exhaust underneath board (concept shows small jets)
+        const trailLen = Math.sin(t*0.02)*8 + 20;
+        const thrusterY = 65;
+        [-25, 25].forEach(tx => {
+            const tGrad = ctx.createLinearGradient(tx, thrusterY, tx, thrusterY + trailLen);
+            tGrad.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
+            tGrad.addColorStop(1, 'rgba(0, 50, 255, 0)');
+            ctx.fillStyle = tGrad;
+            ctx.beginPath(); ctx.ellipse(tx, thrusterY, 5, trailLen, 0, 0, Math.PI*2); ctx.fill();
+        });
+
+        // Front glowing bumper segment (bright white core cyan aura)
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.roundRect(-15, 60, 30, 4, 2);
+        ctx.roundRect(-10, 57, 20, 3, 1.5);
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // --- ORANGE ZIGZAG LEGS (Connecting Board to Sphere) ---
+        // --- ORANGE ANTENNAE/ARMS (Side-Mounted Glowing Loops) ---
         ctx.strokeStyle = '#ffaa00';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
         ctx.shadowColor = '#ff5500';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 15;
         
-        // Left leg
+        // Left Antenna (Vertical elliptical ring on the side)
         ctx.beginPath();
-        ctx.moveTo(-18, 55); 
-        ctx.lineTo(-25, 40); 
-        ctx.lineTo(-12, 25); 
+        ctx.ellipse(-42, 5, 8, 18, 0, 0, Math.PI * 2); 
         ctx.stroke();
 
-        // Right leg
+        // Right Antenna (Vertical elliptical ring on the side)
         ctx.beginPath();
-        ctx.moveTo(18, 55); 
-        ctx.lineTo(25, 40); 
-        ctx.lineTo(12, 25); 
+        ctx.ellipse(42, 5, 8, 18, 0, 0, Math.PI * 2); 
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // --- THE SHIELD BUBBLE (Geodesic / Holographic Sphere) ---
+        // --- THE SHIELD BUBBLE (Geodesic / Hexagonal Sphere) ---
         if (encryptionTime > 0) {
-            const shieldGlow = 0.9;
-            const shieldPulse = Math.sin(t * 0.01) * 5;
+            const shieldGlow = 0.95;
+            const shieldPulse = Math.sin(t * 0.01) * 4;
+            const radius = 80 + shieldPulse;
             
+            ctx.save();
             ctx.beginPath();
-            // Shift shield center slightly up to encompass player
-            ctx.arc(0, -5, 75 + shieldPulse, 0, Math.PI*2);
+            ctx.arc(0, 0, radius, 0, Math.PI*2);
             
-            let shieldGrad = ctx.createRadialGradient(0, -5, 40, 0, -5, 75 + shieldPulse);
+            let shieldGrad = ctx.createRadialGradient(0, 0, 40, 0, 0, radius);
             shieldGrad.addColorStop(0, `rgba(0, 242, 255, ${0.05 * shieldGlow})`);
-            shieldGrad.addColorStop(0.8, `rgba(0, 242, 255, ${0.4 * shieldGlow})`);
-            shieldGrad.addColorStop(1, `rgba(0, 242, 255, ${0.9 * shieldGlow})`);
+            shieldGrad.addColorStop(0.7, `rgba(0, 242, 255, ${0.3 * shieldGlow})`);
+            shieldGrad.addColorStop(1, `rgba(0, 242, 255, ${0.8 * shieldGlow})`);
             
             ctx.fillStyle = shieldGrad;
             ctx.fill();
 
-            ctx.strokeStyle = `rgba(0, 242, 255, ${shieldGlow + 0.2})`;
-            ctx.lineWidth = 4;
-            ctx.stroke();
-
-            // Faint hexagonal/geodesic lines on the shield
-            ctx.strokeStyle = `rgba(0, 242, 255, ${0.3 * shieldGlow})`;
+            // Hexagonal Grid Mesh Effect
+            ctx.strokeStyle = `rgba(0, 242, 255, ${0.4 * shieldGlow})`;
             ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.ellipse(0, -5, 75 + shieldPulse, 30, 0, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.ellipse(0, -5, 30, 75 + shieldPulse, 0, 0, Math.PI*2);
-            ctx.stroke();
-            ctx.beginPath();
-            // Diagonal 1
-            ctx.ellipse(0, -5, 75 + shieldPulse, 75 + shieldPulse, Math.PI/4, 0, Math.PI*2);
-            ctx.stroke();
-        }
+            const hexSize = 15;
+            const rows = 12;
+            const cols = 12;
+            
+            // Draw a fake hex grid within the circle clipping
+            ctx.clip();
+            for(let q = -cols; q <= cols; q++) {
+                for(let r = -rows; r <= rows; r++) {
+                    const hx = hexSize * 1.5 * q;
+                    const hy = hexSize * Math.sqrt(3) * (r + q/2);
+                    // Draw hex lines
+                    ctx.beginPath();
+                    for(let i=0; i<6; i++) {
+                        const angle = i * Math.PI / 3;
+                        ctx.lineTo(hx + hexSize * Math.cos(angle), hy + hexSize * Math.sin(angle));
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
 
-        // --- SPHERE BODY (Dark Core) ---
-        ctx.beginPath();
-        ctx.arc(0, 0, 40, 0, Math.PI*2);
-        ctx.fillStyle = '#050a1a'; // Deep dark metallic blue
-        ctx.fill();
-        
-        // Spherical shading
-        let shadingGen = ctx.createRadialGradient(-10, -10, 5, 0, 0, 40);
-        shadingGen.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
-        shadingGen.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-        ctx.fillStyle = shadingGen;
-        ctx.fill();
-
-        // Rim light
-        ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // --- WRAP-AROUND GLOWING STRIPES ---
-        function drawStripe(y, rX, rY, color, width, startAngle, endAngle) {
+            // Bright Outer Rim
+            ctx.strokeStyle = `rgba(0, 242, 255, ${shieldGlow})`;
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#00f2ff';
+            ctx.shadowBlur = 20;
             ctx.beginPath();
-            ctx.ellipse(0, y, rX, rY, 0, startAngle, endAngle);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 10;
+            ctx.arc(0, 0, radius, 0, Math.PI*2);
             ctx.stroke();
             ctx.shadowBlur = 0;
         }
 
-        // Top cyan stripe
-        drawStripe(-25, 25, 6, '#00f2ff', 2, 0, Math.PI*2);
-        // High cyan stripe
-        drawStripe(-12, 35, 10, '#00bfff', 1.5, Math.PI, Math.PI*2);
-        drawStripe(-12, 35, 10, '#00f2ff', 3, 0, Math.PI); // facing us is brighter
-        
-        // Mid thick Orange sequence
-        drawStripe(5, 38, 12, '#ffaa00', 4, 0.1, Math.PI - 0.1); 
-        drawStripe(15, 35, 10, '#ff4400', 2.5, 0.1, Math.PI - 0.1); 
-        
-        // Bottom cyan stripe
-        drawStripe(25, 25, 6, '#00f2ff', 2, 0.2, Math.PI - 0.2);
-
-        // --- CENTRAL GLOWING EYE ---
-        ctx.shadowColor = '#00f2ff';
-        ctx.shadowBlur = 25;
-        
-        // The eye center
-        const eyeX = -6;
-        const eyeY = -4;
-        
-        // Eye base aura
+        // --- PLAYER SPHERE BODY (Dark Volumetric Metal) ---
         ctx.beginPath();
-        ctx.arc(eyeX, eyeY, 12, 0, Math.PI*2);
-        ctx.fillStyle = '#e6ffff';
+        ctx.arc(0, 5, 42, 0, Math.PI*2);
+        ctx.fillStyle = '#0a0d1d'; // Deep metallic navy
+        ctx.fill();
+        
+        // Volumetric lighting
+        let shadingGen = ctx.createRadialGradient(-12, -12, 10, 0, 0, 42);
+        shadingGen.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        shadingGen.addColorStop(0.4, 'rgba(10, 15, 40, 0.1)');
+        shadingGen.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+        ctx.fillStyle = shadingGen;
         ctx.fill();
 
-        // Eye bright core
-        ctx.beginPath();
-        ctx.arc(eyeX, eyeY, 6, 0, Math.PI*2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
+        // Rim Light
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-        // Cyan ring
+        // --- CONCEPT BANDS / STRIPES (Based on pixel-by-pixel analysis) ---
+        function drawGlowStripe(y, rX, rY, color, width, alpha = 1) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.ellipse(0, y, rX, rY, 0, 0, Math.PI*2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Horizontal Bands (Cyan)
+        drawGlowStripe(-18, 30, 8, '#00f2ff', 2);
+        drawGlowStripe(25, 32, 10, '#00f2ff', 2.5);
+        
+        // Multi-segmented Mid Band (Orange)
+        drawGlowStripe(5, 42, 12, '#ffaa00', 5, 0.8);
+        drawGlowStripe(14, 38, 10, '#ff5500', 3, 0.6);
+
+        // --- CENTRAL GLOWING EYE (Core focus) ---
+        const eyeX = 0;
+        const eyeY = 5;
+        
+        // Outer cyan ring
         ctx.beginPath();
-        ctx.arc(eyeX, eyeY, 14, 0, Math.PI*2);
+        ctx.arc(eyeX, eyeY, 16, 0, Math.PI*2);
         ctx.strokeStyle = '#00f2ff';
         ctx.lineWidth = 3;
         ctx.stroke();
+
+        // White core aura
+        ctx.shadowColor = '#00f2ff';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 10, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
         
+        // Brightest center
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 4, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.restore();
     }
+
 
     function createExplosion(x, y, color, binary = false) {
         for (let i = 0; i < 20; i++) {
